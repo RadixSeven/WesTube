@@ -1,0 +1,11 @@
+python_tests(
+    name="tests",
+    dependencies=[
+        "//wes_tube/cli",
+        "//wes_tube/gui",
+        "//wes_tube/impl",
+        "//wes_tube/state",
+        "//wes_tube/models",
+        "//:3rdparty#pytest",
+    ],
+)

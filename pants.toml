@@ -1,0 +1,34 @@
+[GLOBAL]
+pants_version = "2.24.0"
+
+backend_packages = [
+  "pants.backend.python",
+  "pants.backend.python.lint.ruff",
+  "pants.backend.python.typecheck.mypy",
+  "pants.backend.experimental.python.packaging.pyoxidizer",
+]
+
+[source]
+root_patterns = ["/"]
+
+[python]
+interpreter_constraints = [">=3.13"]
+enable_resolves = true
+
+[python.resolves]
+python-default = "3rdparty/python/default.lock"
+
+[anonymous-telemetry]
+enabled = false
+
+[pytest]
+args = ["--no-header"]
+
+[mypy]
+args = ["--strict"]
+
+[ruff]
+args = ["--line-length=80"]
+
+[pyoxidizer]
+args = ["--release"]

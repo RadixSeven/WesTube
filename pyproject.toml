@@ -13,8 +13,8 @@ extend-exclude = '''
 line-length = 80
 indent-width = 4
 
-# Assume Python 3.9
-target-version = "py39"
+# Assume Python 3.13
+target-version = "py313"
 
 [tool.ruff.lint]
 ignore = [
@@ -416,7 +416,6 @@ extend-select = [
    'S317',
    'S318',
    'S319',
-   'S320',
    'S321',
    'S323',
    'S324',
@@ -476,12 +475,12 @@ extend-select = [
    'T100',
    'T201',
    'T203',
-   'TCH001',
-   'TCH002',
-   'TCH003',
-   'TCH004',
-   'TCH005',
-   'TCH010',
+   'TC001',
+   'TC002',
+   'TC003',
+   'TC004',
+   'TC005',
+   'TC010',
    'TD004',
    'TD005',
    'TD006',
@@ -498,7 +497,7 @@ extend-select = [
    'TRY004',
    'TRY201',
    'TRY301',
-   'TRY302',
+   'TRY203',
    'TRY400',
    'TRY401',
    'W291',
