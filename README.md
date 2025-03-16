@@ -1,4 +1,5 @@
 # WesTube
+
 Tools for producing the YouTube Channel of the Washington Ethical Society
 
 # Tech Stack
@@ -67,5 +68,3 @@ graph TD
     Impl --> State
     State --> Models
 ```
-
-
