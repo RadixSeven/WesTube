@@ -46,6 +46,6 @@ def correct_offset(input_file: Path, output_file: Path) -> int:
     """
     # TODO: Implement sound offset correction using PyAV
     print(  # noqa: T201
-        f"Correcting sound offset in {output_file} using {input_file} as reference"
+        f"Correcting sound offset in {input_file} writing to {output_file}"
     )
     return 0

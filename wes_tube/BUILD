@@ -5,14 +5,26 @@ python_sources(
         "//:3rdparty#alembic",
         "//:3rdparty#pyav",
         "//:3rdparty#requests",
-        "//:3rdparty#pyside6",
     ],
+)
+
+python_distribution(
+    name="dist",
+    dependencies=[
+        ":lib",
+    ],
+    provides=python_artifact(
+        name="wes_tube",
+        version="0.1.0",
+    ),
+    wheel=True,
+    generate_setup=True,
 )
 
 pyoxidizer_binary(
     name="westube",
-    entry_point="wes_tube.cli.main:main",
+    entry_point="wes_tube",
     dependencies=[
-        ":lib",
+        ":dist",
     ],
 )

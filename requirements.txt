@@ -9,4 +9,5 @@ pyav
 # add it once we need it and figure
 # out the build problems.
 # pytorch
-pyside6
+# pyside6 is causing issues with PyOxidizer, so we'll add it back later
+# pyside6

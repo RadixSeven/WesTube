@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -19,15 +20,15 @@ class GuiArgs:
 class SoundOffsetArgs:
     """Arguments for the sound-offset subcommand."""
 
-    filename: str
+    filename: Path
 
 
 @dataclass
 class CorrectSoundArgs:
     """Arguments for the correct-sound subcommand."""
 
-    source_file: str
-    target_file: str
+    input_file: Path
+    output_file: Path
 
 
 @dataclass
@@ -50,6 +51,7 @@ def parse_args(args: Sequence[str] | None = None) -> CliArgs:
         Parsed command line arguments.
     """
     parser = argparse.ArgumentParser(
+        prog="westube",
         description="WesTube - YouTube Channel Tools"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -62,7 +64,7 @@ def parse_args(args: Sequence[str] | None = None) -> CliArgs:
         "sound-offset", help="Detect sound offset in a video file"
     )
     sound_offset_parser.add_argument(
-        "filename", help="Video file to check for sound offset"
+        "filename", help="Video file to check for sound offset", type=Path
     )
 
     # Sound correction subcommand
@@ -70,10 +72,10 @@ def parse_args(args: Sequence[str] | None = None) -> CliArgs:
         "correct-sound", help="Correct sound offset in a video file"
     )
     correct_sound_parser.add_argument(
-        "source_file", help="Source video file with correct timing"
+        "input_file", help="Video file to correct", type=Path
     )
     correct_sound_parser.add_argument(
-        "target_file", help="Video file to correct"
+        "output_file", help="Corrected video file", type=Path
     )
 
     parsed_args = parser.parse_args(args)
@@ -89,8 +91,8 @@ def parse_args(args: Sequence[str] | None = None) -> CliArgs:
     return CliArgs(
         command="correct-sound",
         correct_sound_args=CorrectSoundArgs(
-            source_file=parsed_args.source_file,
-            target_file=parsed_args.target_file,
+            input_file=parsed_args.input_file,
+            output_file=parsed_args.output_file,
         ),
     )
 
@@ -118,8 +120,8 @@ def main(args: Sequence[str] | None = None) -> int:
     from wes_tube.impl.sound import correct_offset
 
     return correct_offset(
-        cli_args.correct_sound_args.source_file,
-        cli_args.correct_sound_args.target_file,
+        cli_args.correct_sound_args.input_file,
+        cli_args.correct_sound_args.output_file,
     )
 
 
