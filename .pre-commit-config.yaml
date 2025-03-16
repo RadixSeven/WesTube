@@ -17,6 +17,7 @@ repos:
     - id: mdformat
       additional_dependencies:
       - mdformat-config
+      - mdformat-gfm  # For GitHub flavored markdown
       - mdformat-ruff
       - mdformat-web
 
