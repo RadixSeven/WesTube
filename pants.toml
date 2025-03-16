@@ -15,7 +15,6 @@ root_patterns = ["/"]
 interpreter_constraints = [">=3.13"]
 enable_resolves = true
 
-
 [anonymous-telemetry]
 enabled = false
 
@@ -27,6 +26,10 @@ args = ["--strict"]
 
 [ruff]
 args = ["--line-length=80"]
+version = "0.11.0"
+known_versions = [
+  "0.11.0|linux_x86_64|3148cd8131ec4f525551b16a57186f5533c705950269cbee7674d484ca6eefe5|11412993|https://github.com/astral-sh/ruff/releases/download/0.11.0/ruff-x86_64-unknown-linux-musl.tar.gz"
+]
 
 [pyoxidizer]
 args = ["--release"]
