@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black-jupyter
+        types_or: ["jupyter"]
+        args: ['--line-length','80']
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.22  # Use the ref you want to point at
+    hooks:
+    - id: mdformat
+      additional_dependencies:
+      - mdformat-config
+      - mdformat-ruff
+      - mdformat-web
+
+
