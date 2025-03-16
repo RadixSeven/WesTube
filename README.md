@@ -25,7 +25,13 @@ the argument parsing will have a wrapper that returns a dataclass so the rest of
 
 # Code standards
 
-All code will be fully annotated with types and docstrings. Docstrings for functions will include all arguments and return value. Docstrings for classes will include a description of the class and a list of attributes. Module docstrings will be concise.
+Python code will be written for Python 3.13.
+
+All code will be fully annotated with types and docstrings.
+
+Types will use the lower-case versions of `list`, `dict`, etc. introduced in Python 3.9. They will also use the `foo | None` syntax rather than `Optional[foo]`.
+
+Docstrings for functions will include all arguments and return value. Docstrings for classes will include a description of the class and a list of attributes. Module docstrings will be concise.
 
 Mutability will be avoided as much as possible. Where it is used, it will be clearly documented.
 
