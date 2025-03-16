@@ -1,0 +1,9 @@
+pre-commit
+mypy
+pytest
+requests
+sqlalchemy
+alembic
+pyav
+pytorch
+pyside6
