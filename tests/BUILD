@@ -1,11 +1,8 @@
 python_tests(
     name="tests",
+    sources=["test_*.py"],
     dependencies=[
-        "//wes_tube/cli",
-        "//wes_tube/gui",
-        "//wes_tube/impl",
-        "//wes_tube/state",
-        "//wes_tube/models",
+        "//wes_tube/cli:lib",
         "//:3rdparty#pytest",
     ],
 )

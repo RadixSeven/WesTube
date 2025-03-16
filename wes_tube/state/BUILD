@@ -3,6 +3,6 @@ python_sources(
     dependencies=[
         "//:3rdparty#sqlalchemy",
         "//:3rdparty#alembic",
-        "//wes_tube/models",
+        "//wes_tube/models:lib",
     ],
 )

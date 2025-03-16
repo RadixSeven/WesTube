@@ -15,8 +15,6 @@ root_patterns = ["/"]
 interpreter_constraints = [">=3.13"]
 enable_resolves = true
 
-[python.resolves]
-python-default = "3rdparty/python/default.lock"
 
 [anonymous-telemetry]
 enabled = false

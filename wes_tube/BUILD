@@ -3,8 +3,7 @@ python_sources(
     dependencies=[
         "//:3rdparty#sqlalchemy",
         "//:3rdparty#alembic",
-        "//:3rdparty#av",
-        "//:3rdparty#torch",
+        "//:3rdparty#pyav",
         "//:3rdparty#requests",
         "//:3rdparty#pyside6",
     ],
