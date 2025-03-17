@@ -26,7 +26,7 @@ the argument parsing will have a wrapper that returns a dataclass so the rest of
 
 # Code standards
 
-Python code will be written for Python 3.13.
+Python code will be written for Python 3.10 (PyOxidizer only works up to 3.10).
 
 All code will be fully annotated with types and docstrings.
 
