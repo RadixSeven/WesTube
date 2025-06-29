@@ -19,24 +19,26 @@ faces in the input video file ...") to the communication format.
 
 This is copied from my "Automate WES YouTube" page in LogSeq. 🍀Hopefully, I'll update it regularly.🍀
 
-- TODO Write sound alignment calculator program - it needs to output JSON for downstream program use - JSON format should include error handling
-- TODO Write sound alignment adjustment program - it should read the JSON from the alignment calculator
-- TODO Install and use WhisperX to generate time-coded transcripts with speakers
-- TODO Write calculate main start and end-points program using the WhisperX outputs - it needs to write JSON for downstream program use
-- TODO Write trim to start-and-end-points program - it should read the output of the calculate main start and end-points
-- TODO Write calculate platform start and end-points program using the WhisperX outputs
-- TODO Write a pipeline automating all the video processing
-- TODO Write a find the Google Docs platform folder (and presentation?) for a given date program - it should output JSON for later steps
-- TODO Write an identify the primary title slide program - Start with Platform Address slide - it should output JSON and read the result of the presentation-finding step - Allow for later expansion for meetings that do not have a platform address (like The Winter Festival)
-- TODO Write a create the YouTube thumbnails presentation from slide program (select and duplicate just that slide to an appropriately-named presentation)
-- TODO Write a "create thumbnails slides" program - it should read the output of the YouTube thumbnails presentation creator - its output should include the platform address title or meeting title. - Version 1 may support only "Platform Address" slides
-- TODO Write a download thumbnails as PNGs (or JPEGs) program, it should read the output of the "create thumbnails slides" program
-- TODO Write an upload-to-YouTube program - it should read the output of the video pipeline and the thumbnail creation slides
-- TODO Write a "create YouTube description" program - it should read the input from WhisperX
-- TODO Upgrade the YouTube Uploader to use the output from "create YouTube description"
-- TODO Upgrade the "identify primary title slide" program to work with non-platform-address meetings
-- TODO Upgrade the "create thumbnails" slides to handle non-platform meetings
-- TODO Upgrade the pipeline program to include slide processing and uploading
+(When pasting, replace `- [ ]` with `- [ ]` and `- DONE` with `- [x]`)
+
+- [ ] Write sound alignment calculator program - it needs to output JSON for downstream program use - JSON format should include error handling
+- [ ] Write sound alignment adjustment program - it should read the JSON from the alignment calculator
+- [ ] Install and use WhisperX to generate time-coded transcripts with speakers
+- [ ] Write calculate main start and end-points program using the WhisperX outputs - it needs to write JSON for downstream program use
+- [ ] Write trim to start-and-end-points program - it should read the output of the calculate main start and end-points
+- [ ] Write calculate platform start and end-points program using the WhisperX outputs
+- [ ] Write a pipeline automating all the video processing
+- [ ] Write a find the Google Docs platform folder (and presentation?) for a given date program - it should output JSON for later steps
+- [ ] Write an identify the primary title slide program - Start with Platform Address slide - it should output JSON and read the result of the presentation-finding step - Allow for later expansion for meetings that do not have a platform address (like The Winter Festival)
+- [ ] Write a create the YouTube thumbnails presentation from slide program (select and duplicate just that slide to an appropriately-named presentation)
+- [ ] Write a "create thumbnails slides" program - it should read the output of the YouTube thumbnails presentation creator - its output should include the platform address title or meeting title. - Version 1 may support only "Platform Address" slides
+- [ ] Write a download thumbnails as PNGs (or JPEGs) program, it should read the output of the "create thumbnails slides" program
+- [ ] Write an upload-to-YouTube program - it should read the output of the video pipeline and the thumbnail creation slides
+- [ ] Write a "create YouTube description" program - it should read the input from WhisperX
+- [ ] Upgrade the YouTube Uploader to use the output from "create YouTube description"
+- [ ] Upgrade the "identify primary title slide" program to work with non-platform-address meetings
+- [ ] Upgrade the "create thumbnails" slides to handle non-platform meetings
+- [ ] Upgrade the pipeline program to include slide processing and uploading
 
 
 # Old plan (and why I changed)
