@@ -2,6 +2,52 @@
 
 Tools for producing the YouTube Channel of the Washington Ethical Society
 
+# Broad plan
+
+Since this is currently a manual process, I intend to 
+create individual, tiny Python programs to automate each step — allowing
+me to incrementally incorporate them into the manual workflow as I 
+complete each one and leading to good encapsulation. I plan to use JSON 
+to communicate between the stages of the pipeline (primarily because it 
+is in the Python standard library). I was thinking of using `pydantic`
+to specify the JSON, so I can ensure that the reader and writer program 
+are using the same definition. I also want to make sure that I don't 
+forget to add error handling (e.g., "failed because could not find any 
+faces in the input video file ...") to the communication format.
+
+# Implementation plan
+
+This is copied from my "Automate WES YouTube" page in LogSeq. 🍀Hopefully, I'll update it regularly.🍀
+
+- TODO Write sound alignment calculator program - it needs to output JSON for downstream program use - JSON format should include error handling
+- TODO Write sound alignment adjustment program - it should read the JSON from the alignment calculator
+- TODO Install and use WhisperX to generate time-coded transcripts with speakers
+- TODO Write calculate main start and end-points program using the WhisperX outputs - it needs to write JSON for downstream program use
+- TODO Write trim to start-and-end-points program - it should read the output of the calculate main start and end-points
+- TODO Write calculate platform start and end-points program using the WhisperX outputs
+- TODO Write a pipeline automating all the video processing
+- TODO Write a find the Google Docs platform folder (and presentation?) for a given date program - it should output JSON for later steps
+- TODO Write an identify the primary title slide program - Start with Platform Address slide - it should output JSON and read the result of the presentation-finding step - Allow for later expansion for meetings that do not have a platform address (like The Winter Festival)
+- TODO Write a create the YouTube thumbnails presentation from slide program (select and duplicate just that slide to an appropriately-named presentation)
+- TODO Write a "create thumbnails slides" program - it should read the output of the YouTube thumbnails presentation creator - its output should include the platform address title or meeting title. - Version 1 may support only "Platform Address" slides
+- TODO Write a download thumbnails as PNGs (or JPEGs) program, it should read the output of the "create thumbnails slides" program
+- TODO Write an upload-to-YouTube program - it should read the output of the video pipeline and the thumbnail creation slides
+- TODO Write a "create YouTube description" program - it should read the input from WhisperX
+- TODO Upgrade the YouTube Uploader to use the output from "create YouTube description"
+- TODO Upgrade the "identify primary title slide" program to work with non-platform-address meetings
+- TODO Upgrade the "create thumbnails" slides to handle non-platform meetings
+- TODO Upgrade the pipeline program to include slide processing and uploading
+
+
+# Old plan (and why I changed)
+Below is the old plan for how to implement the system. I originally wrote it with the hope that AI vibe-coding could help me create the full system. However, the AI was not sophisticated enough and I ended up spending a lot of time in yak-shaving. I would have gotten more done if I'd done everything myself.
+
+So, the new plan breaks the system up into many smaller programs. Hopefully, an AI will be able to handle those simpler assignments. (And if not, I'll pick up the slack.😉)
+
+I'm keeping the plan around for now so that I can refer to it as I write the new plan.
+
+---------
+
 # Tech Stack
 
 The code will be Python, built with pants a single PyOxidizer executable - the executable will be entirely self-contained, though it will be able to read configuration from the persistent state database. That way volunteers from the Ethical Society can download and run a single file.
