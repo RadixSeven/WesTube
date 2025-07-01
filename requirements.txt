@@ -4,7 +4,9 @@ pytest
 requests
 sqlalchemy
 alembic
-pyav
+pydantic
+# pyav didn't install under windows
+# pyav
 # pytorch caused build problems. So we'll
 # add it once we need it and figure
 # out the build problems.
