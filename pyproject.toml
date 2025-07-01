@@ -1,16 +1,16 @@
 [black.tool]
-line-length = 80
+line-length = 88
 # 'extend-exclude' excludes files or directories in addition to the defaults
 extend-exclude = '''
 # A regex preceded with ^/ will apply only to files and directories
 # in the root of the project.
 (
-  ^/bin    # exclude a file named foo.py in the root of the project
+  ^/bin    # exclude bin directory
 )
 '''
 [tool.ruff]
 # Same as Black.
-line-length = 80
+line-length = 88
 indent-width = 4
 
 # Assume Python 3.13
