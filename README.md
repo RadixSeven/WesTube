@@ -4,23 +4,26 @@ Tools for producing the YouTube Channel of the Washington Ethical Society
 
 # Broad plan
 
-Since this is currently a manual process, I intend to 
+Since this is currently a manual process, I intend to
 create individual, tiny Python programs to automate each step — allowing
-me to incrementally incorporate them into the manual workflow as I 
-complete each one and leading to good encapsulation. I plan to use JSON 
-to communicate between the stages of the pipeline (primarily because it 
+me to incrementally incorporate them into the manual workflow as I
+complete each one and leading to good encapsulation. I plan to use JSON
+to communicate between the stages of the pipeline (primarily because it
 is in the Python standard library). I was thinking of using `pydantic`
-to specify the JSON, so I can ensure that the reader and writer program 
-are using the same definition. I also want to make sure that I don't 
-forget to add error handling (e.g., "failed because could not find any 
+to specify the JSON, so I can ensure that the reader and writer program
+are using the same definition. I also want to make sure that I don't
+forget to add error handling (e.g., "failed because could not find any
 faces in the input video file ...") to the communication format.
+
+I will no longer be trying to create a single executable (at least not at the beginning). Or make a system useful for someone else. I get 95% of the value by automating my chore into a single command.
 
 # Implementation plan
 
 This is copied from my "Automate WES YouTube" page in LogSeq. 🍀Hopefully, I'll update it regularly.🍀
 
-(When pasting, replace `- [ ]` with `- [ ]` and `- DONE` with `- [x]`)
+(When pasting, replace `- TODO` with `- [ ]` and `- DONE` with `- [x]`)
 
+- [ ] Get the sound alignment research code working. I'll start with [SyncNet](https://github.com/joonson/syncnet_python) but may move to [MTDVocaLiST](https://github.com/xjchenGit/MTDVocaLiST) if performance is not good enough. MTDVocaLiST requires more complex pre-processing for the face extraction. (At least they require the FAN model, but they are following WAV2Lip. And the FAN model looks like it just uses yet another simpler model to do the bounding box generation and then generates the facial features from there.)
 - [ ] Write sound alignment calculator program - it needs to output JSON for downstream program use - JSON format should include error handling
 - [ ] Write sound alignment adjustment program - it should read the JSON from the alignment calculator
 - [ ] Install and use WhisperX to generate time-coded transcripts with speakers
@@ -40,15 +43,15 @@ This is copied from my "Automate WES YouTube" page in LogSeq. 🍀Hopefully, I'l
 - [ ] Upgrade the "create thumbnails" slides to handle non-platform meetings
 - [ ] Upgrade the pipeline program to include slide processing and uploading
 
-
 # Old plan (and why I changed)
+
 Below is the old plan for how to implement the system. I originally wrote it with the hope that AI vibe-coding could help me create the full system. However, the AI was not sophisticated enough and I ended up spending a lot of time in yak-shaving. I would have gotten more done if I'd done everything myself.
 
 So, the new plan breaks the system up into many smaller programs. Hopefully, an AI will be able to handle those simpler assignments. (And if not, I'll pick up the slack.😉)
 
 I'm keeping the plan around for now so that I can refer to it as I write the new plan.
 
----------
+______________________________________________________________________
 
 # Tech Stack
 
