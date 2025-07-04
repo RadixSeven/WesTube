@@ -20,7 +20,7 @@ def test_parse_args_sound_offset():
     assert args.command == "sound-offset"
     assert args.gui_args is None
     assert args.sound_offset_args is not None
-    assert args.sound_offset_args.filename == "video.mp4"
+    assert str(args.sound_offset_args.filename) == "video.mp4"
     assert args.correct_sound_args is None
 
 
@@ -31,8 +31,8 @@ def test_parse_args_correct_sound():
     assert args.gui_args is None
     assert args.sound_offset_args is None
     assert args.correct_sound_args is not None
-    assert args.correct_sound_args.input_file == "source.mp4"
-    assert args.correct_sound_args.output_file == "target.mp4"
+    assert str(args.correct_sound_args.input_file) == "source.mp4"
+    assert str(args.correct_sound_args.output_file) == "target.mp4"
 
 
 def test_parse_args_no_args():
