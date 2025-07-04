@@ -12,11 +12,6 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class GuiArgs:
-    """Arguments for the GUI subcommand."""
-
-
-@dataclass
 class SoundOffsetArgs:
     """Arguments for the sound-offset subcommand."""
 
@@ -36,7 +31,6 @@ class CliArgs:
     """Command line arguments."""
 
     command: str
-    gui_args: GuiArgs | None = None
     sound_offset_args: SoundOffsetArgs | None = None
     correct_sound_args: CorrectSoundArgs | None = None
 
@@ -51,8 +45,7 @@ def parse_args(args: Sequence[str] | None = None) -> CliArgs:
         Parsed command line arguments.
     """
     parser = argparse.ArgumentParser(
-        prog="westube",
-        description="WesTube - YouTube Channel Tools"
+        prog="westube", description="WesTube - YouTube Channel Tools"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -80,8 +73,6 @@ def parse_args(args: Sequence[str] | None = None) -> CliArgs:
 
     parsed_args = parser.parse_args(args)
 
-    if parsed_args.command == "gui":
-        return CliArgs(command="gui", gui_args=GuiArgs())
     if parsed_args.command == "sound-offset":
         return CliArgs(
             command="sound-offset",
@@ -108,10 +99,6 @@ def main(args: Sequence[str] | None = None) -> int:
     """
     cli_args = parse_args(args)
 
-    if cli_args.command == "gui":
-        from wes_tube.gui import main as gui_main
-
-        return gui_main()
     if cli_args.command == "sound-offset":
         from wes_tube.impl.sound import detect_offset
 
