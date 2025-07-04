@@ -5,7 +5,7 @@ Tools for producing the YouTube Channel of the Washington Ethical Society
 # Broad plan
 
 Since this is currently a manual process, I intend to
-create individual, tiny Python programs to automate each step — allowing
+create individual, tiny Python sub-commands to automate each step — allowing
 me to incrementally incorporate them into the manual workflow as I
 complete each one and leading to good encapsulation. I plan to use JSON
 to communicate between the stages of the pipeline (primarily because it
