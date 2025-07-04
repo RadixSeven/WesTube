@@ -3,6 +3,7 @@
 .ruff_cache
 .mypy_cache
 .pycache
+__pycache__
 
 .pants.d
 dist
