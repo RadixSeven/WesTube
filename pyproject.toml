@@ -5,6 +5,9 @@ version="0.0.1"
 [project.scripts]
 wes-tube="wes_tube.cli.main:main"
 
+[tool.setuptools.package-data]
+wes_tube = ["assets/*"]
+
 [black.tool]
 line-length = 88
 # 'extend-exclude' excludes files or directories in addition to the defaults
