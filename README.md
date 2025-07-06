@@ -2,6 +2,28 @@
 
 Tools for producing the YouTube Channel of the Washington Ethical Society
 
+# Development Install
+
+I haven't worked out a non-development installation procedure yet. So this is also the
+user installation method.
+
+## For Windows:
+
+Install scoop using the directions on [their website](https://scoop.sh/)
+
+Below is to install PyTorch for Cuda 12.8. The
+[PyTorch website](https://pytorch.org/get-started/locally/). will give you the command
+to deal with a different version if scoop installs something incompatible.
+
+```cmd.exe
+scoop install cuda
+python3.13 -m venv .venv
+.venv\Scripts\activate
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+pip install -r requirements.txt
+pip install -e .
+```
+
 # Broad plan
 
 Since this is currently a manual process, I intend to create individual, tiny Python
