@@ -4,6 +4,7 @@
 .mypy_cache
 .pycache
 __pycache__
+wes_tube.egg-info/
 
 .pants.d
 dist

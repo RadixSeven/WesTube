@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/wes_tube" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/wes_tube.egg-info" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.13 (WesTube)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
