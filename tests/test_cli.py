@@ -24,13 +24,15 @@ def test_parse_args_correct_sound():
     assert str(args.correct_sound_args.output_file) == "target.mp4"
 
 
-def test_parse_args_no_args():
+def test_parse_args_no_args(capsys: pytest.CaptureFixture[str]):
     """Test that parsing with no arguments raises an error."""
     with pytest.raises(SystemExit):
         parse_args([])
+    assert "command" in capsys.readouterr().err
 
 
-def test_parse_args_invalid_command():
+def test_parse_args_invalid_command(capsys: pytest.CaptureFixture[str]):
     """Test that parsing an invalid command raises an error."""
     with pytest.raises(SystemExit):
-        parse_args(["invalid"])
+        parse_args(["invalid-command"])
+    assert "invalid-command" in capsys.readouterr().err
