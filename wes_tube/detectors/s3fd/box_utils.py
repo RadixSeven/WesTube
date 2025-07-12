@@ -148,7 +148,9 @@ class Detect:
         self.variance = variance
         self.nms_top_k = nms_top_k
 
-    def forward(self, loc_data, conf_data, prior_data):
+    def forward(
+        self, loc_data: torch.Tensor, conf_data: torch.Tensor, prior_data: torch.Tensor
+    ):
         num = loc_data.size(0)
         num_priors = prior_data.size(0)
 
@@ -165,9 +167,9 @@ class Detect:
             boxes = decoded_boxes[i].clone()
             conf_scores = conf_preds[i].clone()
 
-            for cl in range(1, self.num_classes):
-                c_mask = conf_scores[cl].gt(self.conf_thresh)
-                scores = conf_scores[cl][c_mask]
+            for class_num in range(1, self.num_classes):
+                c_mask = conf_scores[class_num].gt(self.conf_thresh)
+                scores = conf_scores[class_num][c_mask]
 
                 if scores.dim() == 0:
                     continue
@@ -176,7 +178,7 @@ class Detect:
                 ids, count = nms(boxes_, scores, self.nms_thresh, self.nms_top_k)
                 count = count if count < self.top_k else self.top_k
 
-                output[i, cl, :count] = torch.cat(
+                output[i, class_num, :count] = torch.cat(
                     (scores[ids[:count]].unsqueeze(1), boxes_[ids[:count]]), 1
                 )
 
@@ -207,9 +209,9 @@ class PriorBox:
     def forward(self):
         mean = []
         for k, fmap in enumerate(self.feature_maps):
-            feath = fmap[0]
-            featw = fmap[1]
-            for i, j in product(range(feath), range(featw)):
+            feat_h = fmap[0]
+            feat_w = fmap[1]
+            for i, j in product(range(feat_h), range(feat_w)):
                 f_kw = self.imw / self.steps[k]
                 f_kh = self.imh / self.steps[k]
 
