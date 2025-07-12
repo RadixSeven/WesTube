@@ -1,9 +1,11 @@
+"""S3FD face detection implementation package."""
+
+import logging
 import time
 
 import cv2
 import numpy as np
 import torch
-from torchvision import transforms
 
 from .box_utils import nms_
 from .nets import S3FDNet
@@ -13,18 +15,38 @@ img_mean = np.array([104.0, 117.0, 123.0])[:, np.newaxis, np.newaxis].astype("fl
 
 
 class S3FD:
+    """S3FD face detector implementation class."""
+
     def __init__(self, device="cuda"):
+        """Initialize the S3FD face detector.
+
+        Args:
+            device: Device to run the model on (default: "cuda")
+        """
         tstamp = time.time()
         self.device = device
 
-        print("[S3FD] loading with", self.device)
+        logging.info("[S3FD] loading with %s", self.device)
         self.net = S3FDNet(device=self.device).to(self.device)
         state_dict = torch.load(PATH_WEIGHT, map_location=self.device)
         self.net.load_state_dict(state_dict)
         self.net.eval()
-        print("[S3FD] finished loading (%.4f sec)" % (time.time() - tstamp))
+        logging.info("[S3FD] finished loading (%.4f sec)", time.time() - tstamp)
 
-    def detect_faces(self, image, conf_th=0.8, scales=[1]):
+    def detect_faces(self, image, conf_th=0.8, scales=None):
+        """Detect faces in the input image.
+
+        Args:
+            image: Input image to detect faces in
+            conf_th: Confidence threshold for detection (default: 0.8)
+            scales: List of scales to run detection at (default: [1])
+
+        Returns:
+            numpy.ndarray: Array of detected face bounding boxes
+        """
+        if scales is None:
+            scales = [1]
+
         w, h = image.shape[1], image.shape[0]
 
         bboxes = np.empty(shape=(0, 5))
@@ -57,6 +79,4 @@ class S3FD:
                         j += 1
 
             keep = nms_(bboxes, 0.1)
-            bboxes = bboxes[keep]
-
-        return bboxes
+            return bboxes[keep]
