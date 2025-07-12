@@ -1,6 +1,7 @@
 pre-commit
 mypy
 pytest
+pytest-cov
 requests
 sqlalchemy
 alembic
