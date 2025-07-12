@@ -1,6 +1,22 @@
 """Sound processing functionality for WesTube."""
 
+import logging
+from importlib import resources
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+from wes_tube import assets
+
+logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from types import ModuleType
+    from typing import cast
+
+    # mypy / the type checker does not
+    # understand that assets is an instance
+    # of ModuleType.
+    assets = cast(ModuleType, assets)
 
 
 def detect_offset(filename: Path) -> int:
@@ -20,7 +36,10 @@ def detect_offset(filename: Path) -> int:
         RuntimeError: If the video file can't be processed.
     """
     # TODO: Implement sound offset detection using PyTorch
-    print(f"Detecting sound offset in {filename}")  # noqa: T201
+    with resources.open_binary(assets, "syncnet_v2.model") as f:
+        syncnet_model = f.read()
+        logger.info(f"SyncNet Model is {len(syncnet_model)} bytes long")
+    logger.info(f"Detecting sound offset in {filename}")
     return 0
 
 

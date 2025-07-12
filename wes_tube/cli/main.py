@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -98,6 +99,11 @@ def main(args: Sequence[str] | None = None) -> int:
         Exit code.
     """
     cli_args = parse_args(args)
+    logging.basicConfig(
+        format="%(asctime)s || %(levelname)s || %(name)s || %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S%z",
+        level=logging.INFO,
+    )
 
     if cli_args.command == "sound-offset":
         from wes_tube.impl.sound import detect_offset
