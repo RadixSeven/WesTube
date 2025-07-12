@@ -1,4 +1,6 @@
 import torch
+
+# noinspection PyPep8Naming
 import torch.nn.functional as F
 from torch import nn
 from torch.nn import init
@@ -7,7 +9,7 @@ from .box_utils import Detect, PriorBox
 
 
 class L2Norm(nn.Module):
-    def __init__(self, n_channels, scale):
+    def __init__(self, n_channels: int, scale: float):
         super(L2Norm, self).__init__()
         self.n_channels = n_channels
         self.gamma = scale or None
@@ -18,7 +20,7 @@ class L2Norm(nn.Module):
     def reset_parameters(self):
         init.constant_(self.weight, self.gamma)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         norm = x.pow(2).sum(dim=1, keepdim=True).sqrt() + self.eps
         x = torch.div(x, norm)
         out = self.weight.unsqueeze(0).unsqueeze(2).unsqueeze(3).expand_as(x) * x
@@ -26,7 +28,7 @@ class L2Norm(nn.Module):
 
 
 class S3FDNet(nn.Module):
-    def __init__(self, device="cuda"):
+    def __init__(self, device: str = "cuda"):
         super(S3FDNet, self).__init__()
         self.device = device
 
@@ -108,7 +110,7 @@ class S3FDNet(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
         self.detect = Detect()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         size = x.size()[2:]
         sources = list()
         loc = list()
