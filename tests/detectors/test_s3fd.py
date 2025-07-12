@@ -2,21 +2,7 @@
 
 from unittest import mock
 
-import pytest
-
 from wes_tube.detectors.s3fd import S3FD
-
-
-@pytest.fixture
-def mock_s3fd():
-    """Create a mocked S3FD object without loading the actual model."""
-    with (
-        mock.patch("torch.load", return_value={}),
-        mock.patch("wes_tube.detectors.s3fd.S3FDNet") as mock_net,
-        mock.patch("wes_tube.detectors.s3fd.PATH_WEIGHT", "mock_path.pth"),
-    ):
-        mock_net.return_value = mock.MagicMock()
-        return S3FD(device="cpu")
 
 
 def test_init():

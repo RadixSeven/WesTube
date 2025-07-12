@@ -241,3 +241,60 @@ def test_prior_box():
     # All values should be between 0 and 1
     assert torch.all(priors_clip >= 0)
     assert torch.all(priors_clip <= 1)
+
+
+def test_detect_empty_scores():
+    """Test Detect forward method when scores.dim() == 0 condition is met."""
+    # Initialize the Detect class
+    detect = Detect(num_classes=2, conf_thresh=0.5)
+
+    # Create test data where no detections will pass the confidence threshold
+    batch_size = 1
+    num_priors = 10
+
+    # All confidence scores below threshold to trigger the empty scores condition
+    conf_data = torch.zeros(batch_size, num_priors, 2)
+    conf_data[:, :, 1] = 0.4  # All class 1 scores below the conf_thresh of 0.5
+
+    loc_data = torch.zeros(batch_size, num_priors, 4)
+    prior_data = torch.ones(num_priors, 4) * 0.5
+
+    # Run the forward method
+    output = detect.forward(loc_data, conf_data, prior_data)
+
+    # Check that the output has the expected shape
+    assert output.shape == (batch_size, 2, detect.top_k, 5)
+
+    # Check that all values in the output are zeros
+    # This confirms that the if scores.dim() == 0 condition was triggered and handled correctly
+    assert torch.sum(output).item() == 0
+
+
+def test_prior_box_forward():
+    """Test PriorBox forward method that generates anchor boxes."""
+    # Set up test parameters
+    input_size = (300, 300)  # Height, Width
+    feature_maps = [(38, 38), (19, 19), (10, 10), (5, 5), (3, 3), (1, 1)]
+
+    # Initialize PriorBox with default parameters
+    prior_box = PriorBox(input_size, feature_maps)
+
+    # Get output from forward method
+    priors = prior_box.forward()
+
+    # Validate output shape and type
+    assert isinstance(priors, torch.FloatTensor)
+    assert priors.dim() == 2
+    assert priors.shape[1] == 4  # Each prior has 4 values: cx, cy, w, h
+
+    # Calculate expected number of priors
+    expected_count = sum([fm[0] * fm[1] for fm in feature_maps])
+    assert priors.shape[0] == expected_count
+
+    # Test with clip=True option
+    prior_box_clip = PriorBox(input_size, feature_maps, clip=True)
+    priors_clipped = prior_box_clip.forward()
+
+    # Verify all values in clipped priors are between 0 and 1
+    assert priors_clipped.min() >= 0
+    assert priors_clipped.max() <= 1
