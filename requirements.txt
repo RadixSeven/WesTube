@@ -5,6 +5,7 @@ requests
 sqlalchemy
 alembic
 pydantic
+opencv-python
 # pyav didn't install under windows
 # pyav
 # pytorch caused build problems. So we'll
