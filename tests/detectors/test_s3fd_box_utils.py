@@ -270,6 +270,45 @@ def test_detect_empty_scores():
     assert torch.sum(output).item() == 0
 
 
+def test_detect_forward_line_175():
+    """
+    Test that specifically ensures line 175 in Detect.forward is executed.
+    Line 175 is executed when scores.dim() == 0, which happens when no scores
+    for a class exceed the confidence threshold.
+    """
+    # Initialize the Detect class with a high confidence threshold
+    detect = Detect(num_classes=3, conf_thresh=0.7)
+
+    # Create test data
+    batch_size = 1
+    num_priors = 5
+
+    # Create confidence data where:
+    # - Class 1 has all scores below threshold (will trigger scores.dim() == 0)
+    # - Class 2 has some scores above threshold (will not trigger scores.dim() == 0)
+    conf_data = torch.zeros(batch_size, num_priors, 3)
+    conf_data[:, :, 1] = 0.6  # All class 1 scores below the conf_thresh of 0.7
+    conf_data[:, 2:4, 2] = 0.8  # Some class 2 scores above threshold
+
+    loc_data = torch.zeros(batch_size, num_priors, 4)
+    prior_data = torch.ones(num_priors, 4) * 0.5
+
+    # Run the forward method
+    output = detect.forward(loc_data, conf_data, prior_data)
+
+    # Verify output shape
+    assert output.shape == (batch_size, 3, detect.top_k, 5)
+
+    # Class 1 should have no detections (all zeros) because scores.dim() == 0 condition was triggered
+    assert torch.sum(output[:, 1, :, :]).item() == 0
+
+    # Class 2 should have some detections (non-zero values)
+    assert torch.sum(output[:, 2, :, :]).item() > 0
+
+    # This test ensures that line 175 in box_utils.py is executed for class 1
+    # but not for class 2, verifying both paths through the code
+
+
 def test_prior_box_forward():
     """Test PriorBox forward method that generates anchor boxes."""
     # Set up test parameters
