@@ -18,9 +18,9 @@ import argparse
 import glob
 import logging
 import os
-import pdb
 import pickle
 import subprocess
+import sys
 import time
 from shutil import rmtree
 from typing import TypedDict
@@ -340,7 +340,8 @@ def crop_video(
     output = subprocess.call(command, stdout=None)
 
     if output != 0:
-        pdb.set_trace()
+        logging.error(f"Failed to crop audio file {audio_tmp}")
+        sys.exit(output)
 
     # ========== COMBINE AUDIO AND VIDEO FILES ==========
 
@@ -360,7 +361,8 @@ def crop_video(
     output = subprocess.call(command, stdout=None)
 
     if output != 0:
-        pdb.set_trace()
+        logging.error(f"Failed to combine audio and video files {crop_file}")
+        sys.exit(output)
 
     logging.info(f"Written {crop_file}")
 
