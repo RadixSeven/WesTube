@@ -46,13 +46,14 @@ regularly.🍀
 
 (When pasting, replace `- TODO` with `- [ ]` and `- DONE` with `- [x]`)
 
-- [ ] Get the sound alignment research code working. I'll start with
+- [x] Get the sound alignment research code working. I'll start with
   [SyncNet](https://github.com/joonson/syncnet_python) but may move to
   [MTDVocaLiST](https://github.com/xjchenGit/MTDVocaLiST) if performance is not good
   enough. MTDVocaLiST requires more complex pre-processing for the face extraction. (At
   least they require the FAN model, but they are following WAV2Lip. And the FAN model
   looks like it just uses yet another simpler model to do the bounding box generation
   and then generates the facial features from there.)
+- [ ] Port the sound alignment research code to my repository
 - [ ] Write sound alignment calculator program - it needs to output JSON for downstream
   program use - JSON format should include error handling
 - [ ] Write sound alignment adjustment program - it should read the JSON from the
