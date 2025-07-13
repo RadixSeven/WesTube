@@ -180,9 +180,8 @@ def bb_intersection_over_union(box_a: BoundingBox, box_b: BoundingBox) -> float:
     box_a_area = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
     box_b_area = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
 
-    iou = inter_area / float(box_a_area + box_b_area - inter_area)
-
-    return iou
+    # IoU
+    return inter_area / float(box_a_area + box_b_area - inter_area)
 
 
 # ========== ========== ========== ==========
