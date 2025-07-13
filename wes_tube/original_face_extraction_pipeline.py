@@ -55,8 +55,9 @@ class ProcTrackDict(TypedDict):
 
 parser = argparse.ArgumentParser(description="FaceTracker")
 parser.add_argument(
-    "--data_dir", type=str, default="data/work", help="Output direcotry"
+    "--data_dir", type=str, default="data/work", help="Output directory"
 )
+# noinspection SpellCheckingInspection
 parser.add_argument("--videofile", type=str, default="", help="Input video file")
 parser.add_argument("--reference", type=str, default="", help="Video reference")
 parser.add_argument(
@@ -64,7 +65,7 @@ parser.add_argument(
 )
 parser.add_argument("--crop_scale", type=float, default=0.40, help="Scale bounding box")
 parser.add_argument(
-    "--min_track", type=int, default=100, help="Minimum facetrack duration"
+    "--min_track", type=int, default=100, help="Minimum face-track duration"
 )
 parser.add_argument("--frame_rate", type=int, default=25, help="Frame rate")
 parser.add_argument(
@@ -78,6 +79,7 @@ parser.add_argument(
 )
 opt = parser.parse_args()
 
+# noinspection SpellCheckingInspection
 opt.avi_dir = os.path.join(opt.data_dir, "pyavi")
 opt.tmp_dir = os.path.join(opt.data_dir, "pytmp")
 opt.work_dir = os.path.join(opt.data_dir, "pywork")
@@ -89,16 +91,16 @@ opt.frames_dir = os.path.join(opt.data_dir, "pyframes")
 # ========== ========== ========== ==========
 
 
-def bb_intersection_over_union(boxA: BoundingBox, boxB: BoundingBox) -> float:
-    xA = max(boxA[0], boxB[0])
-    yA = max(boxA[1], boxB[1])
-    xB = min(boxA[2], boxB[2])
-    yB = min(boxA[3], boxB[3])
+def bb_intersection_over_union(box_a: BoundingBox, box_b: BoundingBox) -> float:
+    x_a = max(box_a[0], box_b[0])
+    y_a = max(box_a[1], box_b[1])
+    x_b = min(box_a[2], box_b[2])
+    y_b = min(box_a[3], box_b[3])
 
-    interArea = max(0, xB - xA) * max(0, yB - yA)
+    interArea = max(0, x_b - x_a) * max(0, y_b - y_a)
 
-    boxAArea = (boxA[2] - boxA[0]) * (boxA[3] - boxA[1])
-    boxBArea = (boxB[2] - boxB[0]) * (boxB[3] - boxB[1])
+    boxAArea = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
+    boxBArea = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
 
     iou = interArea / float(boxAArea + boxBArea - interArea)
 
@@ -111,23 +113,23 @@ def bb_intersection_over_union(boxA: BoundingBox, boxB: BoundingBox) -> float:
 
 
 def track_shot(
-    opt: argparse.Namespace, scenefaces: list[list[FaceDict]]
+    opt: argparse.Namespace, scene_faces: list[list[FaceDict]]
 ) -> list[TrackDict]:
-    iouThres = 0.5  # Minimum IOU between consecutive face detections
+    iou_threshold = 0.5  # Minimum IOU between consecutive face detections
     tracks: list[TrackDict] = []
 
     while True:
         track: list[FaceDict] = []
-        for framefaces in scenefaces:
-            for face in framefaces:
+        for frame_faces in scene_faces:
+            for face in frame_faces:
                 if track == []:
                     track.append(face)
-                    framefaces.remove(face)
+                    frame_faces.remove(face)
                 elif face["frame"] - track[-1]["frame"] <= opt.num_failed_det:
                     iou = bb_intersection_over_union(face["bbox"], track[-1]["bbox"])
-                    if iou > iouThres:
+                    if iou > iou_threshold:
                         track.append(face)
-                        framefaces.remove(face)
+                        frame_faces.remove(face)
                         continue
                 else:
                     break
@@ -135,15 +137,15 @@ def track_shot(
         if track == []:
             break
         if len(track) > opt.min_track:
-            framenum = np.array([f["frame"] for f in track])
+            frame_num = np.array([f["frame"] for f in track])
             bboxes = np.array([np.array(f["bbox"]) for f in track])
 
-            frame_i = np.arange(framenum[0], framenum[-1] + 1)
+            frame_i = np.arange(frame_num[0], frame_num[-1] + 1)
 
             bboxes_i: list[np.ndarray] = []
             for ij in range(4):
-                interpfn = interp1d(framenum, bboxes[:, ij])
-                bboxes_i.append(interpfn(frame_i))
+                interp_fn = interp1d(frame_num, bboxes[:, ij])
+                bboxes_i.append(interp_fn(frame_i))
             bboxes_i_stacked = np.stack(bboxes_i, axis=1)
 
             if (
@@ -164,13 +166,13 @@ def track_shot(
 
 
 def crop_video(
-    opt: argparse.Namespace, track: TrackDict, cropfile: str
+    opt: argparse.Namespace, track: TrackDict, crop_file: str
 ) -> ProcTrackDict:
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
     flist.sort()
 
     fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    vOut = cv2.VideoWriter(cropfile + "t.avi", fourcc, opt.frame_rate, (224, 224))
+    vOut = cv2.VideoWriter(crop_file + "t.avi", fourcc, opt.frame_rate, (224, 224))
 
     dets: DetDict = {"x": [], "y": [], "s": []}
 
@@ -208,9 +210,9 @@ def crop_video(
 
         vOut.write(cv2.resize(face, (224, 224)))
 
-    audiotmp = os.path.join(opt.tmp_dir, opt.reference, "audio.wav")
-    audiostart = (track["frame"][0]) / opt.frame_rate
-    audioend = (track["frame"][-1] + 1) / opt.frame_rate
+    audio_tmp = os.path.join(opt.tmp_dir, opt.reference, "audio.wav")
+    audio_start = (track["frame"][0]) / opt.frame_rate
+    audio_end = (track["frame"][-1] + 1) / opt.frame_rate
 
     vOut.release()
 
@@ -218,32 +220,32 @@ def crop_video(
 
     command = "ffmpeg -y -i %s -ss %.3f -to %.3f %s" % (
         os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
-        audiostart,
-        audioend,
-        audiotmp,
+        audio_start,
+        audio_end,
+        audio_tmp,
     )
     output = subprocess.call(command, shell=True, stdout=None)
 
     if output != 0:
         pdb.set_trace()
 
-    sample_rate, audio = wavfile.read(audiotmp)
+    sample_rate, audio = wavfile.read(audio_tmp)
 
     # ========== COMBINE AUDIO AND VIDEO FILES ==========
 
     command = "ffmpeg -y -i %st.avi -i %s -c:v copy -c:a copy %s.avi" % (
-        cropfile,
-        audiotmp,
-        cropfile,
+        crop_file,
+        audio_tmp,
+        crop_file,
     )
     output = subprocess.call(command, shell=True, stdout=None)
 
     if output != 0:
         pdb.set_trace()
 
-    print("Written %s" % cropfile)
+    print("Written %s" % crop_file)
 
-    os.remove(cropfile + "t.avi")
+    os.remove(crop_file + "t.avi")
 
     print(
         "Mean pos: x %.2f y %.2f s %.2f"
@@ -266,10 +268,10 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
 
     dets: list[list[FaceDict]] = []
 
-    for fidx, fname in enumerate(flist):
+    for f_idx, f_name in enumerate(flist):
         start_time = time.time()
 
-        image = cv2.imread(fname)
+        image = cv2.imread(f_name)
 
         image_np = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         bboxes = DET.detect_faces(image_np, conf_th=0.9, scales=[opt.facedet_scale])
@@ -277,7 +279,7 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
         dets.append([])
         for bbox in bboxes:
             dets[-1].append(
-                {"frame": fidx, "bbox": (bbox[:-1]).tolist(), "conf": float(bbox[-1])}
+                {"frame": f_idx, "bbox": (bbox[:-1]).tolist(), "conf": float(bbox[-1])}
             )
 
         elapsed_time = time.time() - start_time
@@ -286,15 +288,15 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
             "%s-%05d; %d dets; %.2f Hz"
             % (
                 os.path.join(opt.avi_dir, opt.reference, "video.avi"),
-                fidx,
+                f_idx,
                 len(dets[-1]),
                 (1 / elapsed_time),
             )
         )
 
-    savepath = os.path.join(opt.work_dir, opt.reference, "faces.pckl")
+    save_path = os.path.join(opt.work_dir, opt.reference, "faces.pckl")
 
-    with open(savepath, "wb") as fil:
+    with open(save_path, "wb") as fil:
         pickle.dump(dets, fil)
 
     return dets
@@ -323,14 +325,14 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
 
     scene_list = scene_manager.get_scene_list(base_timecode)
 
-    savepath = os.path.join(opt.work_dir, opt.reference, "scene.pckl")
+    save_path = os.path.join(opt.work_dir, opt.reference, "scene.pckl")
 
     if scene_list == []:
         scene_list = [
             (video_manager.get_base_timecode(), video_manager.get_current_timecode())
         ]
 
-    with open(savepath, "wb") as fil:
+    with open(save_path, "wb") as fil:
         pickle.dump(scene_list, fil)
 
     print(
@@ -376,19 +378,19 @@ command = "ffmpeg -y -i %s -qscale:v 2 -async 1 -r 25 %s" % (
     opt.videofile,
     os.path.join(opt.avi_dir, opt.reference, "video.avi"),
 )
-output = subprocess.call(command, shell=True, stdout=None)
+subprocess.call(command, shell=True, stdout=None)
 
 command = "ffmpeg -y -i %s -qscale:v 2 -threads 1 -f image2 %s" % (
     os.path.join(opt.avi_dir, opt.reference, "video.avi"),
     os.path.join(opt.frames_dir, opt.reference, "%06d.jpg"),
 )
-output = subprocess.call(command, shell=True, stdout=None)
+subprocess.call(command, shell=True, stdout=None)
 
 command = "ffmpeg -y -i %s -ac 1 -vn -acodec pcm_s16le -ar 16000 %s" % (
     os.path.join(opt.avi_dir, opt.reference, "video.avi"),
     os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
 )
-output = subprocess.call(command, shell=True, stdout=None)
+subprocess.call(command, shell=True, stdout=None)
 
 # ========== FACE DETECTION ==========
 
@@ -400,25 +402,25 @@ scene: list[tuple] = scene_detect(opt)
 
 # ========== FACE TRACKING ==========
 
-alltracks: list[TrackDict] = []
-vidtracks: list[ProcTrackDict] = []
+all_tracks: list[TrackDict] = []
+vid_tracks: list[ProcTrackDict] = []
 
 for shot in scene:
     if shot[1].frame_num - shot[0].frame_num >= opt.min_track:
-        alltracks.extend(track_shot(opt, faces[shot[0].frame_num : shot[1].frame_num]))
+        all_tracks.extend(track_shot(opt, faces[shot[0].frame_num : shot[1].frame_num]))
 
 # ========== FACE TRACK CROP ==========
 
-for ii, track in enumerate(alltracks):
-    vidtracks.append(
+for ii, track in enumerate(all_tracks):
+    vid_tracks.append(
         crop_video(opt, track, os.path.join(opt.crop_dir, opt.reference, "%05d" % ii))
     )
 
 # ========== SAVE RESULTS ==========
 
-savepath = os.path.join(opt.work_dir, opt.reference, "tracks.pckl")
+save_path = os.path.join(opt.work_dir, opt.reference, "tracks.pckl")
 
-with open(savepath, "wb") as fil:
-    pickle.dump(vidtracks, fil)
+with open(save_path, "wb") as fil:
+    pickle.dump(vid_tracks, fil)
 
 rmtree(os.path.join(opt.tmp_dir, opt.reference))
