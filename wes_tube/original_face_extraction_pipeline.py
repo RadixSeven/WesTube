@@ -52,39 +52,46 @@ class ProcTrackDict(TypedDict):
 # ========== ========== ========== ==========
 # # PARSE ARGS
 # ========== ========== ========== ==========
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="FaceTracker")
+    parser.add_argument(
+        "--data_dir", type=str, default="data/work", help="Output directory"
+    )
+    # noinspection SpellCheckingInspection
+    parser.add_argument("--videofile", type=str, default="", help="Input video file")
+    parser.add_argument("--reference", type=str, default="", help="Video reference")
+    parser.add_argument(
+        "--facedet_scale",
+        type=float,
+        default=0.25,
+        help="Scale factor for face detection",
+    )
+    parser.add_argument(
+        "--crop_scale", type=float, default=0.40, help="Scale bounding box"
+    )
+    parser.add_argument(
+        "--min_track", type=int, default=100, help="Minimum face-track duration"
+    )
+    parser.add_argument("--frame_rate", type=int, default=25, help="Frame rate")
+    parser.add_argument(
+        "--num_failed_det",
+        type=int,
+        default=25,
+        help="Number of missed detections allowed before tracking is stopped",
+    )
+    parser.add_argument(
+        "--min_face_size", type=int, default=100, help="Minimum face size in pixels"
+    )
+    opt = parser.parse_args()
 
-parser = argparse.ArgumentParser(description="FaceTracker")
-parser.add_argument(
-    "--data_dir", type=str, default="data/work", help="Output directory"
-)
-# noinspection SpellCheckingInspection
-parser.add_argument("--videofile", type=str, default="", help="Input video file")
-parser.add_argument("--reference", type=str, default="", help="Video reference")
-parser.add_argument(
-    "--facedet_scale", type=float, default=0.25, help="Scale factor for face detection"
-)
-parser.add_argument("--crop_scale", type=float, default=0.40, help="Scale bounding box")
-parser.add_argument(
-    "--min_track", type=int, default=100, help="Minimum face-track duration"
-)
-parser.add_argument("--frame_rate", type=int, default=25, help="Frame rate")
-parser.add_argument(
-    "--num_failed_det",
-    type=int,
-    default=25,
-    help="Number of missed detections allowed before tracking is stopped",
-)
-parser.add_argument(
-    "--min_face_size", type=int, default=100, help="Minimum face size in pixels"
-)
-opt = parser.parse_args()
+    # noinspection SpellCheckingInspection
+    opt.avi_dir = os.path.join(opt.data_dir, "pyavi")
+    opt.tmp_dir = os.path.join(opt.data_dir, "pytmp")
+    opt.work_dir = os.path.join(opt.data_dir, "pywork")
+    opt.crop_dir = os.path.join(opt.data_dir, "pycrop")
+    opt.frames_dir = os.path.join(opt.data_dir, "pyframes")
+    return opt
 
-# noinspection SpellCheckingInspection
-opt.avi_dir = os.path.join(opt.data_dir, "pyavi")
-opt.tmp_dir = os.path.join(opt.data_dir, "pytmp")
-opt.work_dir = os.path.join(opt.data_dir, "pywork")
-opt.crop_dir = os.path.join(opt.data_dir, "pycrop")
-opt.frames_dir = os.path.join(opt.data_dir, "pyframes")
 
 # ========== ========== ========== ==========
 # # IOU FUNCTION
@@ -97,12 +104,12 @@ def bb_intersection_over_union(box_a: BoundingBox, box_b: BoundingBox) -> float:
     x_b = min(box_a[2], box_b[2])
     y_b = min(box_a[3], box_b[3])
 
-    interArea = max(0, x_b - x_a) * max(0, y_b - y_a)
+    inter_area = max(0, x_b - x_a) * max(0, y_b - y_a)
 
-    boxAArea = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
-    boxBArea = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
+    box_a_area = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
+    box_b_area = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
 
-    iou = interArea / float(boxAArea + boxBArea - interArea)
+    iou = inter_area / float(box_a_area + box_b_area - inter_area)
 
     return iou
 
@@ -171,8 +178,8 @@ def crop_video(
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
     flist.sort()
 
-    fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    vOut = cv2.VideoWriter(crop_file + "t.avi", fourcc, opt.frame_rate, (224, 224))
+    four_cc = cv2.VideoWriter_fourcc(*"XVID")
+    v_out = cv2.VideoWriter(crop_file + "t.avi", four_cc, opt.frame_rate, (224, 224))
 
     dets: DetDict = {"x": [], "y": [], "s": []}
 
@@ -208,13 +215,13 @@ def crop_video(
             int(mx - bs * (1 + cs)) : int(mx + bs * (1 + cs)),
         ]
 
-        vOut.write(cv2.resize(face, (224, 224)))
+        v_out.write(cv2.resize(face, (224, 224)))
 
     audio_tmp = os.path.join(opt.tmp_dir, opt.reference, "audio.wav")
     audio_start = (track["frame"][0]) / opt.frame_rate
     audio_end = (track["frame"][-1] + 1) / opt.frame_rate
 
-    vOut.release()
+    v_out.release()
 
     # ========== CROP AUDIO FILE ==========
 
@@ -261,7 +268,7 @@ def crop_video(
 
 
 def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
-    DET = S3FD(device="cuda")
+    detector = S3FD(device="cuda")
 
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
     flist.sort()
@@ -274,7 +281,7 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
         image = cv2.imread(f_name)
 
         image_np = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        bboxes = DET.detect_faces(image_np, conf_th=0.9, scales=[opt.facedet_scale])
+        bboxes = detector.detect_faces(image_np, confidence_threshold=0.9, scales=[opt.facedet_scale])
 
         dets.append([])
         for bbox in bboxes:
@@ -313,7 +320,8 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
     )
     stats_manager = StatsManager()
     scene_manager = SceneManager(stats_manager)
-    # Add ContentDetector algorithm (constructor takes detector options like threshold).
+    # Add ContentDetector algorithm
+    # (constructor takes detector options like `threshold`).
     scene_manager.add_detector(ContentDetector())
     base_timecode = video_manager.get_base_timecode()
 
@@ -347,80 +355,93 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
 # # EXECUTE DEMO
 # ========== ========== ========== ==========
 
-# ========== DELETE EXISTING DIRECTORIES ==========
 
-if os.path.exists(os.path.join(opt.work_dir, opt.reference)):
-    rmtree(os.path.join(opt.work_dir, opt.reference))
+def main():
+    """Execute demo."""
+    opt = parse_args()
 
-if os.path.exists(os.path.join(opt.crop_dir, opt.reference)):
-    rmtree(os.path.join(opt.crop_dir, opt.reference))
+    # ========== DELETE EXISTING DIRECTORIES ==========
 
-if os.path.exists(os.path.join(opt.avi_dir, opt.reference)):
-    rmtree(os.path.join(opt.avi_dir, opt.reference))
+    if os.path.exists(os.path.join(opt.work_dir, opt.reference)):
+        rmtree(os.path.join(opt.work_dir, opt.reference))
 
-if os.path.exists(os.path.join(opt.frames_dir, opt.reference)):
-    rmtree(os.path.join(opt.frames_dir, opt.reference))
+    if os.path.exists(os.path.join(opt.crop_dir, opt.reference)):
+        rmtree(os.path.join(opt.crop_dir, opt.reference))
 
-if os.path.exists(os.path.join(opt.tmp_dir, opt.reference)):
+    if os.path.exists(os.path.join(opt.avi_dir, opt.reference)):
+        rmtree(os.path.join(opt.avi_dir, opt.reference))
+
+    if os.path.exists(os.path.join(opt.frames_dir, opt.reference)):
+        rmtree(os.path.join(opt.frames_dir, opt.reference))
+
+    if os.path.exists(os.path.join(opt.tmp_dir, opt.reference)):
+        rmtree(os.path.join(opt.tmp_dir, opt.reference))
+
+    # ========== MAKE NEW DIRECTORIES ==========
+
+    os.makedirs(os.path.join(opt.work_dir, opt.reference))
+    os.makedirs(os.path.join(opt.crop_dir, opt.reference))
+    os.makedirs(os.path.join(opt.avi_dir, opt.reference))
+    os.makedirs(os.path.join(opt.frames_dir, opt.reference))
+    os.makedirs(os.path.join(opt.tmp_dir, opt.reference))
+
+    # ========== CONVERT VIDEO AND EXTRACT FRAMES ==========
+
+    command = "ffmpeg -y -i %s -qscale:v 2 -async 1 -r 25 %s" % (
+        opt.videofile,
+        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
+    )
+    subprocess.call(command, shell=True, stdout=None)
+
+    command = "ffmpeg -y -i %s -qscale:v 2 -threads 1 -f image2 %s" % (
+        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
+        os.path.join(opt.frames_dir, opt.reference, "%06d.jpg"),
+    )
+    subprocess.call(command, shell=True, stdout=None)
+
+    command = "ffmpeg -y -i %s -ac 1 -vn -acodec pcm_s16le -ar 16000 %s" % (
+        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
+        os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
+    )
+    subprocess.call(command, shell=True, stdout=None)
+
+    # ========== FACE DETECTION ==========
+
+    faces: list[list[FaceDict]] = inference_video(opt)
+
+    # ========== SCENE DETECTION ==========
+
+    scene: list[tuple] = scene_detect(opt)
+
+    # ========== FACE TRACKING ==========
+
+    all_tracks: list[TrackDict] = []
+    vid_tracks: list[ProcTrackDict] = []
+
+    for shot in scene:
+        if shot[1].frame_num - shot[0].frame_num >= opt.min_track:
+            all_tracks.extend(
+                track_shot(opt, faces[shot[0].frame_num : shot[1].frame_num])
+            )
+
+    # ========== FACE TRACK CROP ==========
+
+    for ii, track in enumerate(all_tracks):
+        vid_tracks.append(
+            crop_video(
+                opt, track, os.path.join(opt.crop_dir, opt.reference, "%05d" % ii)
+            )
+        )
+
+    # ========== SAVE RESULTS ==========
+
+    save_path = os.path.join(opt.work_dir, opt.reference, "tracks.pckl")
+
+    with open(save_path, "wb") as fil:
+        pickle.dump(vid_tracks, fil)
+
     rmtree(os.path.join(opt.tmp_dir, opt.reference))
 
-# ========== MAKE NEW DIRECTORIES ==========
 
-os.makedirs(os.path.join(opt.work_dir, opt.reference))
-os.makedirs(os.path.join(opt.crop_dir, opt.reference))
-os.makedirs(os.path.join(opt.avi_dir, opt.reference))
-os.makedirs(os.path.join(opt.frames_dir, opt.reference))
-os.makedirs(os.path.join(opt.tmp_dir, opt.reference))
-
-# ========== CONVERT VIDEO AND EXTRACT FRAMES ==========
-
-command = "ffmpeg -y -i %s -qscale:v 2 -async 1 -r 25 %s" % (
-    opt.videofile,
-    os.path.join(opt.avi_dir, opt.reference, "video.avi"),
-)
-subprocess.call(command, shell=True, stdout=None)
-
-command = "ffmpeg -y -i %s -qscale:v 2 -threads 1 -f image2 %s" % (
-    os.path.join(opt.avi_dir, opt.reference, "video.avi"),
-    os.path.join(opt.frames_dir, opt.reference, "%06d.jpg"),
-)
-subprocess.call(command, shell=True, stdout=None)
-
-command = "ffmpeg -y -i %s -ac 1 -vn -acodec pcm_s16le -ar 16000 %s" % (
-    os.path.join(opt.avi_dir, opt.reference, "video.avi"),
-    os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
-)
-subprocess.call(command, shell=True, stdout=None)
-
-# ========== FACE DETECTION ==========
-
-faces: list[list[FaceDict]] = inference_video(opt)
-
-# ========== SCENE DETECTION ==========
-
-scene: list[tuple] = scene_detect(opt)
-
-# ========== FACE TRACKING ==========
-
-all_tracks: list[TrackDict] = []
-vid_tracks: list[ProcTrackDict] = []
-
-for shot in scene:
-    if shot[1].frame_num - shot[0].frame_num >= opt.min_track:
-        all_tracks.extend(track_shot(opt, faces[shot[0].frame_num : shot[1].frame_num]))
-
-# ========== FACE TRACK CROP ==========
-
-for ii, track in enumerate(all_tracks):
-    vid_tracks.append(
-        crop_video(opt, track, os.path.join(opt.crop_dir, opt.reference, "%05d" % ii))
-    )
-
-# ========== SAVE RESULTS ==========
-
-save_path = os.path.join(opt.work_dir, opt.reference, "tracks.pckl")
-
-with open(save_path, "wb") as fil:
-    pickle.dump(vid_tracks, fil)
-
-rmtree(os.path.join(opt.tmp_dir, opt.reference))
+if __name__ == "__main__":
+    main()
