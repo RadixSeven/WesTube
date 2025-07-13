@@ -103,6 +103,10 @@ class ProcTrackDict(TypedDict):
     proc_track: DetDict
 
 
+# List of all the face detections in a given frame
+FrameDetection = list[FaceDict]
+
+
 # ========== ========== ========== ==========
 # # PARSE ARGS
 # ========== ========== ========== ==========
@@ -190,7 +194,7 @@ def bb_intersection_over_union(box_a: BoundingBox, box_b: BoundingBox) -> float:
 
 
 def track_shot(
-    opt: argparse.Namespace, scene_faces: list[list[FaceDict]]
+    opt: argparse.Namespace, scene_faces: list[FrameDetection]
 ) -> list[TrackDict]:
     """
     Track faces across frames within a scene shot.
@@ -380,7 +384,7 @@ def crop_video(
 # ========== ========== ========== ==========
 
 
-def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
+def inference_video(opt: argparse.Namespace) -> list[FrameDetection]:
     """
     Perform face detection on all frames of a video.
 
@@ -393,14 +397,14 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
         opt: Command line arguments containing detection parameters
 
     Returns:
-        list[list[FaceDict]]: List of face detections for each frame
+        list[FrameDetection]: List of face detections for each frame
     """
     detector = S3FD(device="cuda")
 
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
     flist.sort()
 
-    dets: list[list[FaceDict]] = []
+    dets: list[FrameDetection] = []
 
     for f_idx, f_name in enumerate(flist):
         start_time = time.time()
@@ -412,11 +416,12 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
             image_np, confidence_threshold=0.9, scales=[opt.facedet_scale]
         )
 
-        dets.append([])
+        frame_det: FrameDetection = []
         for bbox in bboxes:
-            dets[-1].append(
+            frame_det.append(
                 {"frame": f_idx, "bbox": (bbox[:-1]).tolist(), "conf": float(bbox[-1])}
             )
+        dets.append(frame_det)
 
         elapsed_time = time.time() - start_time
 
@@ -579,7 +584,7 @@ def main():
 
     # ========== FACE DETECTION ==========
 
-    faces: list[list[FaceDict]] = inference_video(opt)
+    faces: list[FrameDetection] = inference_video(opt)
 
     # ========== SCENE DETECTION ==========
 
