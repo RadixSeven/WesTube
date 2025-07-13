@@ -93,6 +93,7 @@ def nms(boxes, scores, overlap=0.5, top_k=200):
     v, idx = scores.sort(0)  # sort in ascending order
     # I = I[v >= 0.01]
     idx = idx[-top_k:]  # indices of the top-k largest vals
+    # Create empty tensors that will be resized in the loop
     xx1 = boxes.new()
     yy1 = boxes.new()
     xx2 = boxes.new()
@@ -110,6 +111,12 @@ def nms(boxes, scores, overlap=0.5, top_k=200):
         if idx.size(0) == 1:
             break
         idx = idx[:-1]  # remove kept element from view
+        # Resize tensors to match the current size of idx to avoid deprecated behavior
+        xx1.resize_(idx.size(0))
+        yy1.resize_(idx.size(0))
+        xx2.resize_(idx.size(0))
+        yy2.resize_(idx.size(0))
+
         # load bboxes of next highest vals
         torch.index_select(x1, 0, idx, out=xx1)
         torch.index_select(y1, 0, idx, out=yy1)
@@ -120,8 +127,9 @@ def nms(boxes, scores, overlap=0.5, top_k=200):
         yy1 = torch.clamp(yy1, min=y1[i])
         xx2 = torch.clamp(xx2, max=x2[i])
         yy2 = torch.clamp(yy2, max=y2[i])
-        w.resize_as_(xx2)
-        h.resize_as_(yy2)
+        # Resize w and h tensors to match the current size of xx2/yy2
+        w.resize_(xx2.size(0))
+        h.resize_(yy2.size(0))
         w = xx2 - xx1
         h = yy2 - yy1
         # check sizes of xx1 and xx2.. after each iteration
