@@ -1,15 +1,15 @@
-pre-commit
+alembic
 mypy
+opencv-python
+pre-commit
+pydantic
 pytest
 pytest-cov
 requests
-sqlalchemy
-alembic
-pydantic
-opencv-python
 scenedetect[opencv] < 0.6
 scipy
 scipy-stubs
+sqlalchemy
 # pyav didn't install under windows
 # pyav
 # pytorch caused build problems. So we'll
