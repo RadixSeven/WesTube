@@ -21,10 +21,13 @@ from scipy import signal
 from scipy.interpolate import interp1d
 from scipy.io import wavfile
 
+Num = int | float
+BoundingBox = tuple[Num, Num, Num, Num] | list[Num]
+
 
 class FaceDict(TypedDict):
     frame: int
-    bbox: list[float]
+    bbox: BoundingBox
     conf: float
 
 
@@ -34,6 +37,8 @@ class TrackDict(TypedDict):
 
 
 class DetDict(TypedDict):
+    """A detection object"""
+
     x: list[float]
     y: list[float]
     s: list[float]
@@ -84,7 +89,7 @@ opt.frames_dir = os.path.join(opt.data_dir, "pyframes")
 # ========== ========== ========== ==========
 
 
-def bb_intersection_over_union(boxA: list[float], boxB: list[float]) -> float:
+def bb_intersection_over_union(boxA: BoundingBox, boxB: BoundingBox) -> float:
     xA = max(boxA[0], boxB[0])
     yA = max(boxA[1], boxB[1])
     xB = min(boxA[2], boxB[2])
