@@ -1,7 +1,9 @@
+"""Neural network models for S3FD face detection."""
+
 import torch
 
 # noinspection PyPep8Naming
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
 from torch import nn
 from torch.nn import init
 
@@ -9,8 +11,14 @@ from .box_utils import Detect, PriorBox
 
 
 class L2Norm(nn.Module):
+    """L2 normalization layer with learnable scaling parameters.
+
+    This layer normalizes the input tensor along the channel dimension and
+    applies a learnable scale factor.
+    """
+
     def __init__(self, n_channels: int, scale: float):
-        super(L2Norm, self).__init__()
+        super().__init__()
         self.n_channels = n_channels
         self.gamma = scale or None
         self.eps = 1e-10
@@ -18,18 +26,32 @@ class L2Norm(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """Initialize the weight parameter with the scale factor."""
         init.constant_(self.weight, self.gamma)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply L2 normalization and scaling to the input tensor.
+
+        Args:
+            x: Input tensor to be normalized
+
+        Returns:
+            Normalized and scaled tensor
+        """
         norm = x.pow(2).sum(dim=1, keepdim=True).sqrt() + self.eps
         x = torch.div(x, norm)
-        out = self.weight.unsqueeze(0).unsqueeze(2).unsqueeze(3).expand_as(x) * x
-        return out
+        return self.weight.unsqueeze(0).unsqueeze(2).unsqueeze(3).expand_as(x) * x
 
 
 class S3FDNet(nn.Module):
+    """Single Shot Scale-invariant Face Detector (S3FD) neural network.
+
+    This network is designed for efficient face detection across various scales.
+    It uses a VGG-based backbone with additional layers and multi-scale feature maps.
+    """
+
     def __init__(self, device: str = "cuda"):
-        super(S3FDNet, self).__init__()
+        super().__init__()
         self.device = device
 
         self.vgg = nn.ModuleList(
@@ -111,10 +133,18 @@ class S3FDNet(nn.Module):
         self.detect = Detect()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Process input through the network to detect faces.
+
+        Args:
+            x: Input image tensor of shape [batch_size, 3, height, width]
+
+        Returns:
+            Tensor containing detected face boxes, scores, and other metadata
+        """
         size = x.size()[2:]
-        sources = list()
-        loc = list()
-        conf = list()
+        sources = []
+        loc = []
+        conf = []
 
         for k in range(16):
             x = self.vgg[k](x)
@@ -169,10 +199,8 @@ class S3FDNet(nn.Module):
             self.priorbox = PriorBox(size, features_maps)
             self.priors = self.priorbox.forward()
 
-        output = self.detect.forward(
+        return self.detect.forward(
             loc.view(loc.size(0), -1, 4),
             self.softmax(conf.view(conf.size(0), -1, 2)),
             self.priors.type(type(x.data)).to(self.device),
         )
-
-        return output
