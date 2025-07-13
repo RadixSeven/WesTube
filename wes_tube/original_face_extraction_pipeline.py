@@ -376,6 +376,8 @@ def main():
 
     # ========== CONVERT VIDEO AND EXTRACT FRAMES ==========
 
+    # Convert to 25 fps (by dropping/duplicating frames) use a
+    # high-quality encoding (level 2)
     command = (
         f"ffmpeg -y "
         f"-i {opt.videofile} "
@@ -384,6 +386,7 @@ def main():
     )
     subprocess.call(command, shell=True, stdout=None)
 
+    # Extract 25fps video frames to individual JPEG files.
     command = (
         f"ffmpeg -y "
         f"-i {os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
@@ -392,6 +395,7 @@ def main():
     )
     subprocess.call(command, shell=True, stdout=None)
 
+    # Re-sample the audio as uncompressed 16 kHz 16-bit monaural samples.
     command = (
         f"ffmpeg -y "
         f"-i {os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
