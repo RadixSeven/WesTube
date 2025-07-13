@@ -16,6 +16,7 @@ the extraction process.
 
 import argparse
 import glob
+import logging
 import os
 import pdb
 import pickle
@@ -33,6 +34,11 @@ from scenedetect.stats_manager import StatsManager
 from scenedetect.video_manager import VideoManager
 from scipy import signal
 from scipy.interpolate import interp1d
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 # Type aliases for improved code readability
 Num = int | float  # Numeric type that can be either int or float
@@ -345,11 +351,11 @@ def crop_video(
     if output != 0:
         pdb.set_trace()
 
-    print(f"Written {crop_file}")
+    logging.info(f"Written {crop_file}")
 
     os.remove(crop_file + "t.avi")
 
-    print(
+    logging.info(
         f"Mean pos: x {np.mean(dets['x']):.2f} y {np.mean(dets['y']):.2f} "
         f"s {np.mean(dets['s']):.2f}"
     )
@@ -402,7 +408,7 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
 
         elapsed_time = time.time() - start_time
 
-        print(
+        logging.info(
             f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')}-{f_idx:05d}; "
             f"{len(dets[-1])} dets; {(1 / elapsed_time):.2f} Hz"
         )
@@ -462,7 +468,7 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
     with open(save_path, "wb") as fil:
         pickle.dump(scene_list, fil)
 
-    print(
+    logging.info(
         f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
         f"- scenes detected {len(scene_list)}"
     )
