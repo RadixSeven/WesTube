@@ -360,29 +360,19 @@ def main():
     opt = parse_args()
 
     # ========== DELETE EXISTING DIRECTORIES ==========
-
-    if os.path.exists(os.path.join(opt.work_dir, opt.reference)):
-        rmtree(os.path.join(opt.work_dir, opt.reference))
-
-    if os.path.exists(os.path.join(opt.crop_dir, opt.reference)):
-        rmtree(os.path.join(opt.crop_dir, opt.reference))
-
-    if os.path.exists(os.path.join(opt.avi_dir, opt.reference)):
-        rmtree(os.path.join(opt.avi_dir, opt.reference))
-
-    if os.path.exists(os.path.join(opt.frames_dir, opt.reference)):
-        rmtree(os.path.join(opt.frames_dir, opt.reference))
-
-    if os.path.exists(os.path.join(opt.tmp_dir, opt.reference)):
-        rmtree(os.path.join(opt.tmp_dir, opt.reference))
-
     # ========== MAKE NEW DIRECTORIES ==========
 
-    os.makedirs(os.path.join(opt.work_dir, opt.reference))
-    os.makedirs(os.path.join(opt.crop_dir, opt.reference))
-    os.makedirs(os.path.join(opt.avi_dir, opt.reference))
-    os.makedirs(os.path.join(opt.frames_dir, opt.reference))
-    os.makedirs(os.path.join(opt.tmp_dir, opt.reference))
+    sys_dirs = (
+        os.path.join(opt.work_dir, opt.reference),
+        os.path.join(opt.crop_dir, opt.reference),
+        os.path.join(opt.avi_dir, opt.reference),
+        os.path.join(opt.frames_dir, opt.reference),
+        os.path.join(opt.tmp_dir, opt.reference),
+    )
+    for dir_ in sys_dirs:
+        if os.path.exists(dir_):
+            rmtree(dir_)
+        os.makedirs(dir_)
 
     # ========== CONVERT VIDEO AND EXTRACT FRAMES ==========
 
