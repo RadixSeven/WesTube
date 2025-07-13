@@ -7,6 +7,9 @@ sqlalchemy
 alembic
 pydantic
 opencv-python
+scenedetect[opencv] < 0.6
+scipy
+scipy-stubs
 # pyav didn't install under windows
 # pyav
 # pytorch caused build problems. So we'll
