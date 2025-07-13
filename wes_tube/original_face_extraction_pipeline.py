@@ -33,7 +33,6 @@ from scenedetect.stats_manager import StatsManager
 from scenedetect.video_manager import VideoManager
 from scipy import signal
 from scipy.interpolate import interp1d
-from scipy.io import wavfile
 
 # Type aliases for improved code readability
 Num = int | float  # Numeric type that can be either int or float
@@ -332,8 +331,6 @@ def crop_video(
 
     if output != 0:
         pdb.set_trace()
-
-    sample_rate, audio = wavfile.read(audio_tmp)
 
     # ========== COMBINE AUDIO AND VIDEO FILES ==========
 
