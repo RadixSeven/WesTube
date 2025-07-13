@@ -1,4 +1,18 @@
 #!/usr/bin/python
+"""
+Face Extraction Pipeline
+
+This module implements a complete pipeline for extracting face tracks from videos.
+It performs the following steps:
+1. Video preprocessing (format conversion, frame extraction)
+2. Face detection on individual frames
+3. Scene boundary detection
+4. Face tracking across frames within scenes
+5. Face track cropping and video creation
+
+The pipeline can be run from the command line with various parameters to control
+the extraction process.
+"""
 
 import argparse
 import glob
@@ -21,23 +35,50 @@ from scipy import signal
 from scipy.interpolate import interp1d
 from scipy.io import wavfile
 
-Num = int | float
-BoundingBox = tuple[Num, Num, Num, Num] | list[Num]
+# Type aliases for improved code readability
+Num = int | float  # Numeric type that can be either int or float
+BoundingBox = (
+    tuple[Num, Num, Num, Num] | list[Num]
+)  # Bounding box coordinates (x1, y1, x2, y2)
 
 
 class FaceDict(TypedDict):
+    """
+    A dictionary representing a detected face in a frame.
+
+    Attributes:
+        frame: The frame number where the face was detected
+        bbox: Bounding box coordinates (x1, y1, x2, y2)
+        conf: Confidence score of the detection
+    """
+
     frame: int
     bbox: BoundingBox
     conf: float
 
 
 class TrackDict(TypedDict):
+    """
+    A dictionary representing a tracked face across multiple frames.
+
+    Attributes:
+        frame: Array of frame numbers where the face appears
+        bbox: Array of bounding box coordinates for each frame
+    """
+
     frame: np.ndarray
     bbox: np.ndarray
 
 
 class DetDict(TypedDict):
-    """A detection object"""
+    """
+    A dictionary containing processed face detection coordinates and sizes.
+
+    Attributes:
+        x: List of x-coordinates for the center of detected faces
+        y: List of y-coordinates for the center of detected faces
+        s: List of sizes (half the maximum of width or height) for detected faces
+    """
 
     x: list[float]
     y: list[float]
@@ -45,6 +86,14 @@ class DetDict(TypedDict):
 
 
 class ProcTrackDict(TypedDict):
+    """
+    A dictionary containing both the original track and processed track data.
+
+    Attributes:
+        track: Original track data
+        proc_track: Processed track data with smoothed coordinates
+    """
+
     track: TrackDict
     proc_track: DetDict
 
@@ -53,6 +102,13 @@ class ProcTrackDict(TypedDict):
 # # PARSE ARGS
 # ========== ========== ========== ==========
 def parse_args() -> argparse.Namespace:
+    """
+    Parse command line arguments for the face extraction pipeline.
+
+    Returns:
+        argparse.Namespace: An object containing all the parsed arguments with additional
+                           directory paths added for convenience.
+    """
     parser = argparse.ArgumentParser(description="FaceTracker")
     parser.add_argument(
         "--data_dir", type=str, default="data/work", help="Output directory"
@@ -99,6 +155,16 @@ def parse_args() -> argparse.Namespace:
 
 
 def bb_intersection_over_union(box_a: BoundingBox, box_b: BoundingBox) -> float:
+    """
+    Calculate the Intersection over Union (IoU) of two bounding boxes.
+
+    Args:
+        box_a: First bounding box in format (x1, y1, x2, y2)
+        box_b: Second bounding box in format (x1, y1, x2, y2)
+
+    Returns:
+        float: IoU value between 0 and 1, where 0 means no overlap and 1 means perfect overlap
+    """
     x_a = max(box_a[0], box_b[0])
     y_a = max(box_a[1], box_b[1])
     x_b = min(box_a[2], box_b[2])
@@ -122,6 +188,19 @@ def bb_intersection_over_union(box_a: BoundingBox, box_b: BoundingBox) -> float:
 def track_shot(
     opt: argparse.Namespace, scene_faces: list[list[FaceDict]]
 ) -> list[TrackDict]:
+    """
+    Track faces across frames within a scene shot.
+
+    This function identifies continuous face tracks by linking face detections
+    across consecutive frames based on IoU (Intersection over Union) overlap.
+
+    Args:
+        opt: Command line arguments containing tracking parameters
+        scene_faces: List of face detections for each frame in the scene
+
+    Returns:
+        list[TrackDict]: List of face tracks, each containing frame numbers and bounding boxes
+    """
     iou_threshold = 0.5  # Minimum IOU between consecutive face detections
     tracks: list[TrackDict] = []
 
@@ -175,6 +254,23 @@ def track_shot(
 def crop_video(
     opt: argparse.Namespace, track: TrackDict, crop_file: str
 ) -> ProcTrackDict:
+    """
+    Crop a face track from video frames and create a new video with the cropped face.
+
+    This function:
+    1. Extracts face regions from video frames based on tracking data
+    2. Applies smoothing to the face track coordinates
+    3. Creates a new video with the cropped face
+    4. Extracts and adds the corresponding audio segment
+
+    Args:
+        opt: Command line arguments containing processing parameters
+        track: Face track data with frame numbers and bounding boxes
+        crop_file: Base path for the output video file
+
+    Returns:
+        ProcTrackDict: Dictionary containing the original track and processed track data
+    """
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
     flist.sort()
 
@@ -270,6 +366,20 @@ def crop_video(
 
 
 def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
+    """
+    Perform face detection on all frames of a video.
+
+    This function:
+    1. Loads each frame from the extracted frames directory
+    2. Detects faces in each frame using the S3FD face detector
+    3. Saves the detection results to a pickle file
+
+    Args:
+        opt: Command line arguments containing detection parameters
+
+    Returns:
+        list[list[FaceDict]]: List of face detections for each frame
+    """
     detector = S3FD(device="cuda")
 
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
@@ -314,6 +424,19 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
 
 
 def scene_detect(opt: argparse.Namespace) -> list[tuple]:
+    """
+    Detect scene changes in a video.
+
+    This function:
+    1. Uses the PySceneDetect library to identify scene boundaries
+    2. Saves the scene detection results to a pickle file
+
+    Args:
+        opt: Command line arguments containing video paths
+
+    Returns:
+        list[tuple]: List of scene boundaries, each represented as a tuple of start and end timecodes
+    """
     video_manager = VideoManager(
         [os.path.join(opt.avi_dir, opt.reference, "video.avi")]
     )
@@ -356,7 +479,20 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
 
 
 def main():
-    """Execute demo."""
+    """
+    Execute the complete face extraction pipeline.
+
+    This function orchestrates the entire process:
+    1. Parses command line arguments
+    2. Creates necessary directories
+    3. Converts the input video to a standard format
+    4. Extracts video frames and audio
+    5. Performs face detection on all frames
+    6. Detects scene boundaries
+    7. Tracks faces across frames within each scene
+    8. Crops face tracks and creates individual face videos
+    9. Saves the results
+    """
     opt = parse_args()
 
     # ========== DELETE EXISTING DIRECTORIES ==========
