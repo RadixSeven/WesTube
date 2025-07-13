@@ -239,7 +239,7 @@ class PriorBox:
         variance=(0.1, 0.2),
         min_sizes=(16, 32, 64, 128, 256, 512),
         steps=(4, 8, 16, 32, 64, 128),
-        clip=None,
+        clip=False,  # noqa: FBT002
     ):
         """Initialize the prior box generator.
 
@@ -262,7 +262,7 @@ class PriorBox:
         self.variance = variance
         self.min_sizes = min_sizes
         self.steps = steps
-        self.clip = False if clip is None else clip
+        self.clip = clip
 
     def forward(self):
         """Generate prior boxes.
