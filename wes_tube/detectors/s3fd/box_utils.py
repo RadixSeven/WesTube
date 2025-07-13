@@ -1,4 +1,10 @@
-from itertools import product as product
+"""Utility functions for bounding box operations in S3FD detector.
+
+This module provides functions and classes for handling bounding boxes,
+including non-maximum suppression, decoding, and prior box generation.
+"""
+
+from itertools import product
 
 import numpy as np
 import torch
@@ -125,22 +131,38 @@ def nms(boxes, scores, overlap=0.5, top_k=200):
         # IoU = i / (area(a) + area(b) - i)
         rem_areas = torch.index_select(area, 0, idx)  # load remaining areas)
         union = (rem_areas - inter) + area[i]
-        IoU = inter / union  # store result in iou
+        iou = inter / union  # store result in iou
         # keep only elements with an IoU <= overlap
-        idx = idx[IoU.le(overlap)]
+        idx = idx[iou.le(overlap)]
     return keep, count
 
 
 class Detect:
+    """Detection layer for S3FD.
+
+    This class handles the detection process by decoding location predictions,
+    applying confidence thresholds, and performing non-maximum suppression.
+    """
+
     def __init__(
         self,
         num_classes=2,
         top_k=750,
         nms_thresh=0.3,
         conf_thresh=0.05,
-        variance=[0.1, 0.2],
+        variance=(0.1, 0.2),
         nms_top_k=5000,
     ):
+        """Initialize the detection layer.
+
+        Args:
+            num_classes: Number of classes to detect
+            top_k: Maximum number of detections to keep
+            nms_thresh: Threshold for non-maximum suppression
+            conf_thresh: Confidence threshold for detections
+            variance: Variance for prior boxes, defaults to (0.1, 0.2)
+            nms_top_k: Maximum number of boxes to consider for NMS
+        """
         self.num_classes = num_classes
         self.top_k = top_k
         self.nms_thresh = nms_thresh
@@ -151,6 +173,16 @@ class Detect:
     def forward(
         self, loc_data: torch.Tensor, conf_data: torch.Tensor, prior_data: torch.Tensor
     ):
+        """Forward pass for detection.
+
+        Args:
+            loc_data: Location predictions from loc layers
+            conf_data: Confidence predictions from conf layers
+            prior_data: Prior boxes in center-offset form
+
+        Returns:
+            Tensor of detections with shape [batch, num_classes, top_k, 5]
+        """
         num = loc_data.size(0)
         num_priors = prior_data.size(0)
 
@@ -186,16 +218,34 @@ class Detect:
 
 
 class PriorBox:
+    """Prior box generator for S3FD.
+
+    This class generates prior boxes (anchor boxes) for the S3FD detector
+    based on the input image size and feature map configurations.
+    """
+
     def __init__(
         self,
         input_size,
         feature_maps,
-        variance=[0.1, 0.2],
-        min_sizes=[16, 32, 64, 128, 256, 512],
-        steps=[4, 8, 16, 32, 64, 128],
-        clip=False,
+        variance=(0.1, 0.2),
+        min_sizes=(16, 32, 64, 128, 256, 512),
+        steps=(4, 8, 16, 32, 64, 128),
+        clip=None,
     ):
-        super(PriorBox, self).__init__()
+        """Initialize the prior box generator.
+
+        Args:
+            input_size: Size of the input image (height, width)
+            feature_maps: List of feature map sizes
+            variance: Variance for adjusting prior boxes, defaults to (0.1, 0.2)
+            min_sizes: Minimum sizes of prior boxes at each feature level,
+                defaults to (16, 32, 64, 128, 256, 512)
+            steps: Step sizes for each feature level,
+                defaults to (4, 8, 16, 32, 64, 128)
+            clip: Whether to clip prior boxes to image boundaries, defaults to False
+        """
+        super().__init__()
 
         self.imh = input_size[0]
         self.imw = input_size[1]
@@ -204,9 +254,14 @@ class PriorBox:
         self.variance = variance
         self.min_sizes = min_sizes
         self.steps = steps
-        self.clip = clip
+        self.clip = False if clip is None else clip
 
     def forward(self):
+        """Generate prior boxes.
+
+        Returns:
+            Tensor of prior boxes with shape [num_priors, 4]
+        """
         mean = []
         for k, fmap in enumerate(self.feature_maps):
             feat_h = fmap[0]
