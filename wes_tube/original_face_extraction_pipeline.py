@@ -326,14 +326,18 @@ def crop_video(
 
     # ========== CROP AUDIO FILE ==========
 
-    command = (
-        f"ffmpeg -y "
-        f"-i {os.path.join(opt.avi_dir, opt.reference, 'audio.wav')} "
-        f"-ss {audio_start:.3f} "
-        f"-to {audio_end:.3f} "
-        f"{audio_tmp}"
-    )
-    output = subprocess.call(command, shell=True, stdout=None)
+    command = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
+        "-ss",
+        f"{audio_start:.3f}",
+        "-to",
+        f"{audio_end:.3f}",
+        f"{audio_tmp}",
+    ]
+    output = subprocess.call(command, stdout=None)
 
     if output != 0:
         pdb.set_trace()
@@ -341,12 +345,19 @@ def crop_video(
     # ========== COMBINE AUDIO AND VIDEO FILES ==========
 
     command = (
-        f"ffmpeg -y "
-        f"-i {crop_file}t.avi "
-        f"-i {audio_tmp} "
-        f"-c:v copy -c:a copy {crop_file}.avi"
+        "ffmpeg",
+        "-y",
+        "-i",
+        f"{crop_file}t.avi",
+        "-i",
+        f"{audio_tmp}",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "copy",
+        f"{crop_file}.avi",
     )
-    output = subprocess.call(command, shell=True, stdout=None)
+    output = subprocess.call(command, stdout=None)
 
     if output != 0:
         pdb.set_trace()
@@ -517,31 +528,53 @@ def main():
 
     # Convert to 25 fps (by dropping/duplicating frames) use a
     # high-quality encoding (level 2)
-    command = (
-        f"ffmpeg -y "
-        f"-i {opt.videofile} "
-        f"-qscale:v 2 -async 1 -r 25 "
-        f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')}"
-    )
-    subprocess.call(command, shell=True, stdout=None)
+    command = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        opt.videofile,
+        "-qscale:v",
+        "2",
+        "-async",
+        "1",
+        "-r",
+        "25",
+        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
+    ]
+    subprocess.call(command, stdout=None)
 
     # Extract 25fps video frames to individual JPEG files.
-    command = (
-        f"ffmpeg -y "
-        f"-i {os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
-        f"-qscale:v 2 -threads 1 -f image2 "
-        f"{os.path.join(opt.frames_dir, opt.reference, '%06d.jpg')}"
-    )
-    subprocess.call(command, shell=True, stdout=None)
+    command = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
+        "-qscale:v",
+        "2",
+        "-threads",
+        "1",
+        "-f",
+        "image2",
+        os.path.join(opt.frames_dir, opt.reference, "%06d.jpg"),
+    ]
+    subprocess.call(command, stdout=None)
 
     # Re-sample the audio as uncompressed 16 kHz 16-bit monaural samples.
-    command = (
-        f"ffmpeg -y "
-        f"-i {os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
-        f"-ac 1 -vn -acodec pcm_s16le -ar 16000 "
-        f"{os.path.join(opt.avi_dir, opt.reference, 'audio.wav')}"
-    )
-    subprocess.call(command, shell=True, stdout=None)
+    command = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
+        "-ac",
+        "1",
+        "-vn",
+        "-acodec",
+        "pcm_s16le",
+        "-ar",
+        "16000",
+        os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
+    ]
+    subprocess.call(command, stdout=None)
 
     # ========== FACE DETECTION ==========
 
