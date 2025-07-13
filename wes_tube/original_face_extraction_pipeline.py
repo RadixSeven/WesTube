@@ -217,7 +217,7 @@ def crop_video(
 
         v_out.write(cv2.resize(face, (224, 224)))
 
-    audio_tmp = os.path.join(opt.tmp_dir, opt.reference, "audio.wav")
+    audio_tmp = os.path.join(str(opt.tmp_dir), str(opt.reference), "audio.wav")
     audio_start = (track["frame"][0]) / opt.frame_rate
     audio_end = (track["frame"][-1] + 1) / opt.frame_rate
 
@@ -225,11 +225,12 @@ def crop_video(
 
     # ========== CROP AUDIO FILE ==========
 
-    command = "ffmpeg -y -i %s -ss %.3f -to %.3f %s" % (
-        os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
-        audio_start,
-        audio_end,
-        audio_tmp,
+    command = (
+        f"ffmpeg -y "
+        f"-i {os.path.join(opt.avi_dir, opt.reference, 'audio.wav')} "
+        f"-ss {audio_start:.3f} "
+        f"-to {audio_end:.3f} "
+        f"{audio_tmp}"
     )
     output = subprocess.call(command, shell=True, stdout=None)
 
@@ -240,23 +241,24 @@ def crop_video(
 
     # ========== COMBINE AUDIO AND VIDEO FILES ==========
 
-    command = "ffmpeg -y -i %st.avi -i %s -c:v copy -c:a copy %s.avi" % (
-        crop_file,
-        audio_tmp,
-        crop_file,
+    command = (
+        f"ffmpeg -y "
+        f"-i {crop_file}t.avi "
+        f"-i {audio_tmp} "
+        f"-c:v copy -c:a copy {crop_file}.avi"
     )
     output = subprocess.call(command, shell=True, stdout=None)
 
     if output != 0:
         pdb.set_trace()
 
-    print("Written %s" % crop_file)
+    print(f"Written {crop_file}")
 
     os.remove(crop_file + "t.avi")
 
     print(
-        "Mean pos: x %.2f y %.2f s %.2f"
-        % (np.mean(dets["x"]), np.mean(dets["y"]), np.mean(dets["s"]))
+        f"Mean pos: x {np.mean(dets['x']):.2f} y {np.mean(dets['y']):.2f} "
+        f"s {np.mean(dets['s']):.2f}"
     )
 
     return {"track": track, "proc_track": dets}
@@ -281,7 +283,9 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
         image = cv2.imread(f_name)
 
         image_np = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        bboxes = detector.detect_faces(image_np, confidence_threshold=0.9, scales=[opt.facedet_scale])
+        bboxes = detector.detect_faces(
+            image_np, confidence_threshold=0.9, scales=[opt.facedet_scale]
+        )
 
         dets.append([])
         for bbox in bboxes:
@@ -292,13 +296,8 @@ def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
         elapsed_time = time.time() - start_time
 
         print(
-            "%s-%05d; %d dets; %.2f Hz"
-            % (
-                os.path.join(opt.avi_dir, opt.reference, "video.avi"),
-                f_idx,
-                len(dets[-1]),
-                (1 / elapsed_time),
-            )
+            f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')}-{f_idx:05d}; "
+            f"{len(dets[-1])} dets; {(1 / elapsed_time):.2f} Hz"
         )
 
     save_path = os.path.join(opt.work_dir, opt.reference, "faces.pckl")
@@ -344,8 +343,8 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
         pickle.dump(scene_list, fil)
 
     print(
-        "%s - scenes detected %d"
-        % (os.path.join(opt.avi_dir, opt.reference, "video.avi"), len(scene_list))
+        f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
+        f"- scenes detected {len(scene_list)}"
     )
 
     return scene_list
@@ -387,21 +386,27 @@ def main():
 
     # ========== CONVERT VIDEO AND EXTRACT FRAMES ==========
 
-    command = "ffmpeg -y -i %s -qscale:v 2 -async 1 -r 25 %s" % (
-        opt.videofile,
-        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
+    command = (
+        f"ffmpeg -y "
+        f"-i {opt.videofile} "
+        f"-qscale:v 2 -async 1 -r 25 "
+        f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')}"
     )
     subprocess.call(command, shell=True, stdout=None)
 
-    command = "ffmpeg -y -i %s -qscale:v 2 -threads 1 -f image2 %s" % (
-        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
-        os.path.join(opt.frames_dir, opt.reference, "%06d.jpg"),
+    command = (
+        f"ffmpeg -y "
+        f"-i {os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
+        f"-qscale:v 2 -threads 1 -f image2 "
+        f"{os.path.join(opt.frames_dir, opt.reference, '%06d.jpg')}"
     )
     subprocess.call(command, shell=True, stdout=None)
 
-    command = "ffmpeg -y -i %s -ac 1 -vn -acodec pcm_s16le -ar 16000 %s" % (
-        os.path.join(opt.avi_dir, opt.reference, "video.avi"),
-        os.path.join(opt.avi_dir, opt.reference, "audio.wav"),
+    command = (
+        f"ffmpeg -y "
+        f"-i {os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
+        f"-ac 1 -vn -acodec pcm_s16le -ar 16000 "
+        f"{os.path.join(opt.avi_dir, opt.reference, 'audio.wav')}"
     )
     subprocess.call(command, shell=True, stdout=None)
 
@@ -429,7 +434,9 @@ def main():
     for ii, track in enumerate(all_tracks):
         vid_tracks.append(
             crop_video(
-                opt, track, os.path.join(opt.crop_dir, opt.reference, "%05d" % ii)
+                opt,
+                track,
+                os.path.join(str(opt.crop_dir), str(opt.reference), f"{ii:05d}"),
             )
         )
 
