@@ -66,7 +66,7 @@ def test_detect_faces():
         detector.net.return_value = MockOutput()
 
         # Call detect_faces
-        bboxes = detector.detect_faces(image, conf_th=0.8, scales=[1])
+        bboxes = detector.detect_faces(image, confidence_threshold=0.8, scales=[1])
 
         # Check that the output has the expected shape and values
         assert isinstance(bboxes, np.ndarray)
@@ -115,7 +115,9 @@ def test_detect_faces_with_multiple_scales():
         detector.net.return_value = MockOutput()
 
         # Call detect_faces with multiple scales
-        bboxes = detector.detect_faces(image, conf_th=0.8, scales=[0.5, 1.0, 2.0])
+        bboxes = detector.detect_faces(
+            image, confidence_threshold=0.8, scales=[0.5, 1.0, 2.0]
+        )
 
         # Check that cv2.resize was called for each scale
         assert cv2.resize.call_count == 3
@@ -159,7 +161,7 @@ def test_detect_faces_no_detections():
         detector.net.return_value = MockOutput()
 
         # Call detect_faces
-        bboxes = detector.detect_faces(image, conf_th=0.8, scales=[1])
+        bboxes = detector.detect_faces(image, confidence_threshold=0.8, scales=[1])
 
         # Check that the output is an empty array with the correct shape
         assert isinstance(bboxes, np.ndarray)

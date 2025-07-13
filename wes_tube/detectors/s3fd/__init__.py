@@ -2,6 +2,7 @@
 
 import logging
 import time
+from collections.abc import Sequence
 
 import cv2
 import numpy as np
@@ -17,7 +18,7 @@ img_mean = np.array([104.0, 117.0, 123.0])[:, np.newaxis, np.newaxis].astype("fl
 class S3FD:
     """S3FD face detector implementation class."""
 
-    def __init__(self, device="cuda"):
+    def __init__(self, device: str = "cuda"):
         """Initialize the S3FD face detector.
 
         Args:
@@ -33,20 +34,22 @@ class S3FD:
         self.net.eval()
         logging.info("[S3FD] finished loading (%.4f sec)", time.time() - tstamp)
 
-    def detect_faces(self, image, conf_th=0.8, scales=None):
+    def detect_faces(
+        self,
+        image: cv2.Mat | np.ndarray,
+        confidence_threshold: float = 0.8,
+        scales: Sequence[float | int] = (1,),
+    ):
         """Detect faces in the input image.
 
         Args:
             image: Input image to detect faces in
-            conf_th: Confidence threshold for detection (default: 0.8)
+            confidence_threshold: Confidence threshold for detection (default: 0.8)
             scales: List of scales to run detection at (default: [1])
 
         Returns:
             numpy.ndarray: Array of detected face bounding boxes
         """
-        if scales is None:
-            scales = [1]
-
         w, h = image.shape[1], image.shape[0]
 
         bboxes = np.empty(shape=(0, 5))
@@ -71,7 +74,7 @@ class S3FD:
 
                 for i in range(detections.size(1)):
                     j = 0
-                    while detections[0, i, j, 0] > conf_th:
+                    while detections[0, i, j, 0] > confidence_threshold:
                         score = detections[0, i, j, 0]
                         pt = (detections[0, i, j, 1:] * scale).cpu().numpy()
                         bbox = (pt[0], pt[1], pt[2], pt[3], score)
