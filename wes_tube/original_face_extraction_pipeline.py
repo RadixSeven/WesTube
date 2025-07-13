@@ -8,6 +8,7 @@ import pickle
 import subprocess
 import time
 from shutil import rmtree
+from typing import TypedDict
 
 import cv2
 import numpy as np
@@ -19,6 +20,29 @@ from scenedetect.video_manager import VideoManager
 from scipy import signal
 from scipy.interpolate import interp1d
 from scipy.io import wavfile
+
+
+class FaceDict(TypedDict):
+    frame: int
+    bbox: list[float]
+    conf: float
+
+
+class TrackDict(TypedDict):
+    frame: np.ndarray
+    bbox: np.ndarray
+
+
+class DetDict(TypedDict):
+    x: list[float]
+    y: list[float]
+    s: list[float]
+
+
+class ProcTrackDict(TypedDict):
+    track: TrackDict
+    proc_track: DetDict
+
 
 # ========== ========== ========== ==========
 # # PARSE ARGS
@@ -60,7 +84,7 @@ opt.frames_dir = os.path.join(opt.data_dir, "pyframes")
 # ========== ========== ========== ==========
 
 
-def bb_intersection_over_union(boxA, boxB):
+def bb_intersection_over_union(boxA: list[float], boxB: list[float]) -> float:
     xA = max(boxA[0], boxB[0])
     yA = max(boxA[1], boxB[1])
     xB = min(boxA[2], boxB[2])
@@ -81,12 +105,14 @@ def bb_intersection_over_union(boxA, boxB):
 # ========== ========== ========== ==========
 
 
-def track_shot(opt, scenefaces):
+def track_shot(
+    opt: argparse.Namespace, scenefaces: list[list[FaceDict]]
+) -> list[TrackDict]:
     iouThres = 0.5  # Minimum IOU between consecutive face detections
-    tracks = []
+    tracks: list[TrackDict] = []
 
     while True:
-        track = []
+        track: list[FaceDict] = []
         for framefaces in scenefaces:
             for face in framefaces:
                 if track == []:
@@ -109,20 +135,20 @@ def track_shot(opt, scenefaces):
 
             frame_i = np.arange(framenum[0], framenum[-1] + 1)
 
-            bboxes_i = []
+            bboxes_i: list[np.ndarray] = []
             for ij in range(4):
                 interpfn = interp1d(framenum, bboxes[:, ij])
                 bboxes_i.append(interpfn(frame_i))
-            bboxes_i = np.stack(bboxes_i, axis=1)
+            bboxes_i_stacked = np.stack(bboxes_i, axis=1)
 
             if (
                 max(
-                    np.mean(bboxes_i[:, 2] - bboxes_i[:, 0]),
-                    np.mean(bboxes_i[:, 3] - bboxes_i[:, 1]),
+                    np.mean(bboxes_i_stacked[:, 2] - bboxes_i_stacked[:, 0]),
+                    np.mean(bboxes_i_stacked[:, 3] - bboxes_i_stacked[:, 1]),
                 )
                 > opt.min_face_size
             ):
-                tracks.append({"frame": frame_i, "bbox": bboxes_i})
+                tracks.append({"frame": frame_i, "bbox": bboxes_i_stacked})
 
     return tracks
 
@@ -132,14 +158,16 @@ def track_shot(opt, scenefaces):
 # ========== ========== ========== ==========
 
 
-def crop_video(opt, track, cropfile):
+def crop_video(
+    opt: argparse.Namespace, track: TrackDict, cropfile: str
+) -> ProcTrackDict:
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
     flist.sort()
 
     fourcc = cv2.VideoWriter_fourcc(*"XVID")
     vOut = cv2.VideoWriter(cropfile + "t.avi", fourcc, opt.frame_rate, (224, 224))
 
-    dets = {"x": [], "y": [], "s": []}
+    dets: DetDict = {"x": [], "y": [], "s": []}
 
     for det in track["bbox"]:
         dets["s"].append(max((det[3] - det[1]), (det[2] - det[0])) / 2)
@@ -157,9 +185,9 @@ def crop_video(opt, track, cropfile):
         bs = dets["s"][fidx]  # Detection box size
         bsi = int(bs * (1 + 2 * cs))  # Pad videos by this amount
 
-        image = cv2.imread(flist[frame])
+        image = cv2.imread(flist[int(frame)])
 
-        frame = np.pad(
+        padded_frame = np.pad(
             image,
             ((bsi, bsi), (bsi, bsi), (0, 0)),
             "constant",
@@ -168,7 +196,7 @@ def crop_video(opt, track, cropfile):
         my = dets["y"][fidx] + bsi  # BBox center Y
         mx = dets["x"][fidx] + bsi  # BBox center X
 
-        face = frame[
+        face = padded_frame[
             int(my - bs) : int(my + bs * (1 + 2 * cs)),
             int(mx - bs * (1 + cs)) : int(mx + bs * (1 + cs)),
         ]
@@ -225,13 +253,13 @@ def crop_video(opt, track, cropfile):
 # ========== ========== ========== ==========
 
 
-def inference_video(opt):
+def inference_video(opt: argparse.Namespace) -> list[list[FaceDict]]:
     DET = S3FD(device="cuda")
 
     flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
     flist.sort()
 
-    dets = []
+    dets: list[list[FaceDict]] = []
 
     for fidx, fname in enumerate(flist):
         start_time = time.time()
@@ -244,7 +272,7 @@ def inference_video(opt):
         dets.append([])
         for bbox in bboxes:
             dets[-1].append(
-                {"frame": fidx, "bbox": (bbox[:-1]).tolist(), "conf": bbox[-1]}
+                {"frame": fidx, "bbox": (bbox[:-1]).tolist(), "conf": float(bbox[-1])}
             )
 
         elapsed_time = time.time() - start_time
@@ -272,7 +300,7 @@ def inference_video(opt):
 # ========== ========== ========== ==========
 
 
-def scene_detect(opt):
+def scene_detect(opt: argparse.Namespace) -> list[tuple]:
     video_manager = VideoManager(
         [os.path.join(opt.avi_dir, opt.reference, "video.avi")]
     )
@@ -359,16 +387,16 @@ output = subprocess.call(command, shell=True, stdout=None)
 
 # ========== FACE DETECTION ==========
 
-faces = inference_video(opt)
+faces: list[list[FaceDict]] = inference_video(opt)
 
 # ========== SCENE DETECTION ==========
 
-scene = scene_detect(opt)
+scene: list[tuple] = scene_detect(opt)
 
 # ========== FACE TRACKING ==========
 
-alltracks = []
-vidtracks = []
+alltracks: list[TrackDict] = []
+vidtracks: list[ProcTrackDict] = []
 
 for shot in scene:
     if shot[1].frame_num - shot[0].frame_num >= opt.min_track:
