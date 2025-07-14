@@ -28,6 +28,7 @@ from typing import TypedDict
 import cv2
 import numpy as np
 from detectors import S3FD
+from scenedetect import FrameTimecode
 from scenedetect.detectors import ContentDetector
 from scenedetect.scene_manager import SceneManager
 from scenedetect.stats_manager import StatsManager
@@ -45,6 +46,9 @@ Num = int | float  # Numeric type that can be either int or float
 BoundingBox = (
     tuple[Num, Num, Num, Num] | list[Num]
 )  # Bounding box coordinates (x1, y1, x2, y2)
+
+# The start and end timecodes of a scene, in that order
+ShotBoundaries = tuple[FrameTimecode, FrameTimecode]
 
 
 class FaceDict(TypedDict):
@@ -452,7 +456,7 @@ def inference_video(
 # ========== ========== ========== ==========
 
 
-def scene_detect(avi_dir: str, work_dir: str) -> list[tuple]:
+def scene_detect(avi_dir: str, work_dir: str) -> list[ShotBoundaries]:
     """
     Detect scene changes in a video.
 
@@ -461,14 +465,14 @@ def scene_detect(avi_dir: str, work_dir: str) -> list[tuple]:
     2. Saves the scene detection results to a pickle file
 
     Args:
-        opt: Command line arguments containing video paths
         avi_dir: Path to the directory containing the video file for a
             reference video.
         work_dir: Path to the directory where the scene detection results
             for a reference video will be saved.
 
     Returns:
-        list[tuple]: List of scene boundaries, each represented as a tuple of start and end timecodes
+        List of shot boundaries,
+            each represented as a tuple of start and end timecodes
     """
     avi_path = os.path.join(avi_dir, "video.avi")
     video_manager = VideoManager([avi_path])
@@ -602,7 +606,7 @@ def main():
 
     # ========== SCENE DETECTION ==========
 
-    scene: list[tuple] = scene_detect(
+    shots: list[ShotBoundaries] = scene_detect(
         os.path.join(str(opt.avi_dir), str(opt.reference)),
         os.path.join(str(opt.work_dir), str(opt.reference)),
     )
@@ -612,7 +616,7 @@ def main():
     all_tracks: list[TrackDict] = []
     vid_tracks: list[ProcTrackDict] = []
 
-    for shot in scene:
+    for shot in shots:
         if shot[1].frame_num - shot[0].frame_num >= opt.min_track:
             all_tracks.extend(
                 track_shot(opt, faces[shot[0].frame_num : shot[1].frame_num])
