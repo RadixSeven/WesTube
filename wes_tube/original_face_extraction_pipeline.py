@@ -16,6 +16,7 @@ the extraction process.
 
 import argparse
 import glob
+import itertools
 import logging
 import os
 import pickle
@@ -613,25 +614,22 @@ def main():
 
     # ========== FACE TRACKING ==========
 
-    all_tracks: list[TrackDict] = []
-    vid_tracks: list[ProcTrackDict] = []
-
-    for shot in shots:
-        if shot[1].frame_num - shot[0].frame_num >= opt.min_track:
-            all_tracks.extend(
-                track_shot(opt, faces[shot[0].frame_num : shot[1].frame_num])
-            )
+    all_tracks: list[TrackDict] = itertools.chain.from_iterable(
+        track_shot(opt, faces[shot[0].frame_num : shot[1].frame_num])
+        for shot in shots
+        if shot[1].frame_num - shot[0].frame_num >= opt.min_track
+    )
 
     # ========== FACE TRACK CROP ==========
-
-    for ii, track in enumerate(all_tracks):
-        vid_tracks.append(
-            crop_video(
-                opt,
-                track,
-                os.path.join(str(opt.crop_dir), str(opt.reference), f"{ii:05d}"),
-            )
+    crop_dir = os.path.join(str(opt.crop_dir), str(opt.reference))
+    vid_tracks: list[ProcTrackDict] = [
+        crop_video(
+            opt,
+            track,
+            os.path.join(crop_dir, f"{track_index:05d}"),
         )
+        for track_index, track in enumerate(all_tracks)
+    ]
 
     # ========== SAVE RESULTS ==========
 
