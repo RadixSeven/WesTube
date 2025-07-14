@@ -452,7 +452,7 @@ def inference_video(
 # ========== ========== ========== ==========
 
 
-def scene_detect(opt: argparse.Namespace) -> list[tuple]:
+def scene_detect(avi_dir: str, work_dir: str) -> list[tuple]:
     """
     Detect scene changes in a video.
 
@@ -462,13 +462,16 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
 
     Args:
         opt: Command line arguments containing video paths
+        avi_dir: Path to the directory containing the video file for a
+            reference video.
+        work_dir: Path to the directory where the scene detection results
+            for a reference video will be saved.
 
     Returns:
         list[tuple]: List of scene boundaries, each represented as a tuple of start and end timecodes
     """
-    video_manager = VideoManager(
-        [os.path.join(opt.avi_dir, opt.reference, "video.avi")]
-    )
+    avi_path = os.path.join(avi_dir, "video.avi")
+    video_manager = VideoManager([avi_path])
     stats_manager = StatsManager()
     scene_manager = SceneManager(stats_manager)
     # Add ContentDetector algorithm
@@ -484,7 +487,7 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
 
     scene_list = scene_manager.get_scene_list(base_timecode)
 
-    save_path = os.path.join(opt.work_dir, opt.reference, "scene.pckl")
+    save_path = os.path.join(work_dir, "scene.pckl")
 
     if scene_list == []:
         scene_list = [
@@ -494,10 +497,7 @@ def scene_detect(opt: argparse.Namespace) -> list[tuple]:
     with open(save_path, "wb") as fil:
         pickle.dump(scene_list, fil)
 
-    logging.info(
-        f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')} "
-        f"- scenes detected {len(scene_list)}"
-    )
+    logging.info(f"{avi_path} - scenes detected {len(scene_list)}")
 
     return scene_list
 
@@ -602,7 +602,10 @@ def main():
 
     # ========== SCENE DETECTION ==========
 
-    scene: list[tuple] = scene_detect(opt)
+    scene: list[tuple] = scene_detect(
+        os.path.join(str(opt.avi_dir), str(opt.reference)),
+        os.path.join(str(opt.work_dir), str(opt.reference)),
+    )
 
     # ========== FACE TRACKING ==========
 
