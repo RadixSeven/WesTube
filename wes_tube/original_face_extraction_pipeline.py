@@ -288,7 +288,8 @@ def crop_video(
     flist.sort()
 
     four_cc = cv2.VideoWriter_fourcc(*"XVID")
-    v_out = cv2.VideoWriter(crop_file + "t.avi", four_cc, opt.frame_rate, (224, 224))
+    frame_size = (224, 224)
+    v_out = cv2.VideoWriter(crop_file + "t.avi", four_cc, opt.frame_rate, frame_size)
 
     dets: DetDict = {"x": [], "y": [], "s": []}
 
@@ -324,7 +325,7 @@ def crop_video(
             int(mx - bs * (1 + cs)) : int(mx + bs * (1 + cs)),
         ]
 
-        v_out.write(cv2.resize(face, (224, 224)))
+        v_out.write(cv2.resize(face, frame_size))
 
     audio_tmp = os.path.join(str(opt.tmp_dir), str(opt.reference), "audio.wav")
     audio_start = (track["frame"][0]) / opt.frame_rate
