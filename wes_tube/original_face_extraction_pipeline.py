@@ -384,7 +384,9 @@ def crop_video(
 # ========== ========== ========== ==========
 
 
-def inference_video(opt: argparse.Namespace) -> list[FrameDetection]:
+def inference_video(
+    frames_dir: str, face_det_scale: float, avi_dir: str, work_dir: str
+) -> list[FrameDetection]:
     """
     Perform face detection on all frames of a video.
 
@@ -394,14 +396,21 @@ def inference_video(opt: argparse.Namespace) -> list[FrameDetection]:
     3. Saves the detection results to a pickle file
 
     Args:
-        opt: Command line arguments containing detection parameters
+        frames_dir: Path to the directory containing extracted frames
+            for a video reference,
+        face_det_scale: Scale factor for face detection, used to increase
+            the size of the input image for face detection.
+        avi_dir: Path to the directory containing the video file for a
+            video reference
+        work_dir: Path to the directory where the detection results
+            for a video reference will be saved.
 
     Returns:
         list[FrameDetection]: List of face detections for each frame
     """
     detector = S3FD(device="cuda")
 
-    flist = glob.glob(os.path.join(opt.frames_dir, opt.reference, "*.jpg"))
+    flist = glob.glob(os.path.join(frames_dir, "*.jpg"))
     flist.sort()
 
     dets: list[FrameDetection] = []
@@ -413,7 +422,7 @@ def inference_video(opt: argparse.Namespace) -> list[FrameDetection]:
 
         image_np = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         bboxes = detector.detect_faces(
-            image_np, confidence_threshold=0.9, scales=[opt.facedet_scale]
+            image_np, confidence_threshold=0.9, scales=[face_det_scale]
         )
 
         frame_det: FrameDetection = []
@@ -426,11 +435,11 @@ def inference_video(opt: argparse.Namespace) -> list[FrameDetection]:
         elapsed_time = time.time() - start_time
 
         logging.info(
-            f"{os.path.join(opt.avi_dir, opt.reference, 'video.avi')}-{f_idx:05d}; "
+            f"{os.path.join(avi_dir, 'video.avi')}-{f_idx:05d}; "
             f"{len(dets[-1])} dets; {(1 / elapsed_time):.2f} Hz"
         )
 
-    save_path = os.path.join(opt.work_dir, opt.reference, "faces.pckl")
+    save_path = os.path.join(work_dir, "faces.pckl")
 
     with open(save_path, "wb") as fil:
         pickle.dump(dets, fil)
@@ -584,7 +593,12 @@ def main():
 
     # ========== FACE DETECTION ==========
 
-    faces: list[FrameDetection] = inference_video(opt)
+    faces: list[FrameDetection] = inference_video(
+        os.path.join(str(opt.frames_dir), str(opt.reference)),
+        float(opt.face_det_scale),
+        os.path.join(str(opt.avi_dir), str(opt.reference)),
+        os.path.join(str(opt.work_dir), str(opt.reference)),
+    )
 
     # ========== SCENE DETECTION ==========
 
