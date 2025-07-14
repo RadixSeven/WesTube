@@ -76,6 +76,9 @@ def detect_offset(filename: Path) -> int:
     #
     # # To make the coding more like the research code, I might implement this
     # # as N passes: one per face in the shot with the maximum number of faces.
+    # # This will yield a more direct port in which I don't need to be concerned
+    # # about the details of the batches because I can copy that part of the
+    # # code.
     # TODO: Write pseudocode for the second and later passes
     with resources.open_binary(assets, "syncnet_v2.model") as f:
         syncnet_model = f.read()
