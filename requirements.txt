@@ -1,12 +1,13 @@
 alembic
 mypy
+numpy
 opencv-python
 pre-commit
 pydantic
 pytest
 pytest-cov
 requests
-scenedetect[opencv] < 0.6
+scenedetect[opencv] < 0.7
 scipy
 scipy-stubs
 sqlalchemy

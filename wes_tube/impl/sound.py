@@ -1,9 +1,14 @@
 """Sound processing functionality for WesTube."""
 
 import logging
+from collections.abc import Generator
+from fractions import Fraction
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+import cv2
+import numpy as np
 
 from wes_tube import assets
 
@@ -85,6 +90,61 @@ def detect_offset(filename: Path) -> int:
         logger.info(f"SyncNet Model is {len(syncnet_model)} bytes long")
     logger.info(f"Detecting sound offset in {filename}")
     return 0
+
+
+def re_sampled_video_frames_iterator(
+    video_path: Path, target_fps: float = 25.0
+) -> Generator[np.ndarray]:
+    """
+    Return an iterator through video frames that resamples to target FPS.
+
+    Resampling is done through skipping or duplicating frames
+
+    Original code by Claude 4 Sonnet but heavily modified to fix precision and edge
+    case issues and to improve readability.
+
+    Args:
+        video_path: Path to the video file
+        target_fps: Target frames per second for resampling. Must be greater than 0.
+
+    Yields:
+        numpy.ndarray: Frame in OpenCV format (BGR, uint8)
+    """
+    if target_fps <= 0:
+        raise ValueError("Target FPS must be greater than 0")
+
+    cap = cv2.VideoCapture(str(video_path))
+
+    if not cap.isOpened():
+        logger.error(f"Failed to open video file {video_path}")
+        return
+    logger.info(f"Resampling video {video_path} to {target_fps} FPS")
+
+    try:
+        # How many original frames are in each output frame
+        original_fps = Fraction(cap.get(cv2.CAP_PROP_FPS)).limit_denominator()
+        original_per_output = original_fps / Fraction(target_fps).limit_denominator()
+
+        # The original frame number (fractional) corresponding to the next frame
+        # to output
+        next_output_frame = Fraction(0)
+        # The number in the original video of the image held in ``frame``
+        current_frame = 0
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Yield the next frame
+            while current_frame >= int(next_output_frame):
+                yield frame
+                next_output_frame += original_per_output
+
+            current_frame += 1
+
+    finally:
+        cap.release()
 
 
 def correct_offset(input_file: Path, output_file: Path) -> int:
