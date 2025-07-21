@@ -108,7 +108,7 @@ def main(args: Sequence[str] | None = None) -> int:
     if cli_args.command == "sound-offset":
         from wes_tube.impl.sound import detect_offset
 
-        return detect_offset(cli_args.sound_offset_args.filename)
+        return detect_offset(cli_args.sound_offset_args.filename.resolve())
     # correct-sound
     from wes_tube.impl.sound import correct_offset
 

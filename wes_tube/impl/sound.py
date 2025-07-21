@@ -1,7 +1,9 @@
 """Sound processing functionality for WesTube."""
 
 import logging
-from collections.abc import Generator
+from collections import defaultdict
+from collections.abc import Generator, Sequence
+from dataclasses import dataclass
 from fractions import Fraction
 from importlib import resources
 from pathlib import Path
@@ -9,6 +11,7 @@ from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
+import scenedetect
 
 from wes_tube import assets
 
@@ -18,20 +21,37 @@ if TYPE_CHECKING:
     from types import ModuleType
     from typing import cast
 
+    from scenedetect.video_splitter import TimecodePair
+
     # mypy / the type checker does not
     # understand that assets is an instance
     # of ModuleType.
     assets = cast(ModuleType, assets)
 
+BoundingBox = tuple[int, int, int, int]
 
-def detect_offset(filename: Path) -> int:
+
+@dataclass
+class DetectedFace:
+    """A detected face in a video frame."""
+
+    frame_num: int
+    b_box: BoundingBox
+    confidence: float
+
+
+# The face in each entry in the trajectory is assumed to be the same face
+Trajectory = list[DetectedFace]
+
+
+def detect_offset(video_file_path: Path) -> int:
     """Detect the audio offset in a video file.
 
     This function uses PyTorch to analyze the video and audio streams
     to determine if there is an offset between them.
 
     Args:
-        filename: Path to the video file to analyze.
+        video_file_path: Path to the video file to analyze.
 
     Returns:
         Exit code (0 for success, non-zero for failure).
@@ -88,7 +108,9 @@ def detect_offset(filename: Path) -> int:
     with resources.open_binary(assets, "syncnet_v2.model") as f:
         syncnet_model = f.read()
         logger.info(f"SyncNet Model is {len(syncnet_model)} bytes long")
-    logger.info(f"Detecting sound offset in {filename}")
+    logger.info(f"Detecting sound offset in {video_file_path}")
+    trajectories = face_trajectories(video_file_path)  # noqa: F841
+    # TODO: add the second phase (passes 2..N) of the offset detection and remove F841
     return 0
 
 
@@ -145,6 +167,23 @@ def re_sampled_video_frames_iterator(
 
     finally:
         cap.release()
+
+
+# Pair of the first and last frame numbers in a shot
+# Converted from a TimecodePair
+ShotBoundaries = tuple[int, int]
+
+
+def face_trajectories(video_file_path: Path) -> Sequence[Trajectory]:
+    """Return the face trajectories in a video file."""
+    timecode_shots: Sequence[TimecodePair] = scenedetect.detect(
+        str(video_file_path), scenedetect.ContentDetector()
+    )
+    shots: list[ShotBoundaries] = [  # noqa: F841
+        (s[0].frame_num, s[1].frame_num) for s in timecode_shots
+    ]
+    face_trj: dict[ShotBoundaries, list[Trajectory]] = defaultdict(list)  # noqa: F841
+    # TODO: finish filling in face_trj, use shots and remove the noqa: F841
 
 
 def correct_offset(input_file: Path, output_file: Path) -> int:
