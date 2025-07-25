@@ -122,7 +122,7 @@ def re_sampled_video_frames_iterator(
 
     Resampling is done through skipping or duplicating frames
 
-    Original code by Claude 4 Sonnet but heavily modified to fix precision and edge
+    Original code by Claude 4 Sonnet but modified to fix precision and edge
     case issues and to improve readability.
 
     Args:
